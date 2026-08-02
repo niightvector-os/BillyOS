@@ -1,0 +1,5 @@
+<svg width="320" height="70" viewBox="0 0 320 70" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="24" cy="35" r="20" fill="#08090D" stroke="#7C6CFF" stroke-width="1.5" opacity="0.5"/>
+  <circle cx="24" cy="35" r="6" fill="#FF6B4A"/>
+  <text x="56" y="45" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="34" fill="#E8E6E1" letter-spacing="0.5">BillyOS</text>
+</svg>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BillyOS — HUD Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --bg-soft: #0C0C0E;
+    --bg-sidebar: #0A0A0C;
+    --text: #E8E6E1;
+    --text-dim: #55586A;
+    --text-mid: #9A9DB0;
+    --accent: #7C6CFF;
+    --accent-dim: #7C6CFF33;
+    --ember: #FF6B4A;
+    --border: #FFFFFF0f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+  .app { position: relative; width: 100%; height: 100vh; }
+
+  /* ===== SIDEBAR — overlay drawer, fully hidden until opened ===== */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: 264px; height: 100%;
+    background: var(--bg-sidebar);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 22px 14px; gap: 22px;
+    transform: translateX(-100%);
+    transition: transform 0.32s cubic-bezier(.4,0,.2,1);
+    z-index: 30;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .sb-top { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 4px; }
+  .sb-brand {
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600; font-size: 14px; letter-spacing: 0.06em;
+    color: var(--text-mid); white-space: nowrap;
+  }
+  .sb-brand .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ember); box-shadow: 0 0 8px var(--ember); flex-shrink: 0; }
+  .sb-close {
+    width: 26px; height: 26px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 7px; color: var(--text-dim); cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .sb-close:hover { background: #FFFFFF0a; color: var(--text); }
+
+  .sb-new {
+    display: flex; align-items: center; gap: 10px;
+    background: #7C6CFF14; border: 1px solid var(--accent-dim);
+    color: var(--text); font-family: 'Inter', sans-serif;
+    font-size: 13px; font-weight: 500; border-radius: 9px;
+    padding: 9px 12px; cursor: pointer; white-space: nowrap;
+    transition: background 0.2s ease;
+  }
+  .sb-new:hover { background: #7C6CFF22; }
+
+  .sb-section { display: flex; flex-direction: column; gap: 2px; }
+  .sb-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.1em; color: var(--text-dim);
+    text-transform: uppercase; padding: 4px 10px 6px;
+  }
+  .sb-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; font-size: 13px;
+    color: var(--text-mid); cursor: pointer; white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .sb-item:hover { background: #FFFFFF08; color: var(--text); }
+  .sb-item .ic { width: 15px; flex-shrink: 0; opacity: 0.75; }
+  .sb-item .pin { margin-left: auto; color: var(--ember); font-size: 10px; opacity: 0.8; }
+  .sb-bottom { margin-top: auto; }
+
+  /* dim overlay behind drawer when open */
+  .scrim {
+    position: fixed; inset: 0; background: #00000066;
+    opacity: 0; pointer-events: none; transition: opacity 0.28s ease;
+    z-index: 20;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+
+  /* handle to open sidebar — always visible, never hidden */
+  .sb-handle {
+    position: fixed; top: 26px; left: 24px;
+    width: 34px; height: 34px; z-index: 40;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; color: var(--text-dim);
+    cursor: pointer; transition: background 0.2s ease, color 0.2s ease;
+  }
+  .sb-handle:hover { background: #FFFFFF0a; color: var(--text); }
+
+  /* ===== MAIN STAGE ===== */
+  .stage {
+    position: relative; width: 100%; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+  }
+
+  .core-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 40px; }
+
+  .core-center {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--ember);
+    animation: core-pulse 4s ease-in-out infinite;
+  }
+  @keyframes core-pulse {
+    0%, 100% { box-shadow: 0 0 16px 3px var(--ember), 0 0 40px 12px #FF6B4A16; }
+    50% { box-shadow: 0 0 26px 8px var(--ember), 0 0 60px 20px #FF6B4A2c; }
+  }
+
+  h1.title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500; font-size: 13px; letter-spacing: 0.18em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+
+  .search-shell { position: relative; width: 580px; max-width: 84vw; }
+  .search-bar {
+    width: 100%; background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 999px; padding: 17px 24px;
+    display: flex; align-items: center; gap: 14px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .search-bar:focus-within {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 4px #7C6CFF14, 0 0 40px -10px #7C6CFF44;
+  }
+  .search-bar input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px;
+  }
+  .search-bar input::placeholder { color: var(--text-dim); }
+  .icon-btn {
+    width: 20px; height: 20px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-dim); cursor: pointer; transition: color 0.2s ease;
+  }
+  .icon-btn:hover { color: var(--accent); }
+
+  .modes { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .mode-pill {
+    display: flex; align-items: center; gap: 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.03em; color: var(--text-mid);
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 14px; cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .mode-pill .sym { color: var(--accent); font-size: 12px; }
+  .mode-pill:hover { color: var(--text); border-color: var(--accent-dim); background: #7C6CFF0d; }
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="sb-handle" id="sbHandle">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </div>
+
+    <div class="scrim" id="scrim"></div>
+
+    <div class="sidebar" id="sidebar">
+      <div class="sb-top">
+        <div class="sb-brand"><span class="dot"></span> BILLYOS</div>
+        <div class="sb-close" id="sbClose">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </div>
+      </div>
+
+      <div class="sb-new">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        <span>New Chat</span>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">Pinned</div>
+        <div class="sb-item"><span class="ic">◆</span> Roman Empire deep dive <span class="pin">✦</span></div>
+        <div class="sb-item"><span class="ic">◆</span> BillyOS architecture <span class="pin">✦</span></div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-label">Recent</div>
+        <div class="sb-item"><span class="ic">◇</span> Volcano formation</div>
+        <div class="sb-item"><span class="ic">◇</span> Physics revision notes</div>
+        <div class="sb-item"><span class="ic">◇</span> WWI timeline + map</div>
+      </div>
+
+      <div class="sb-bottom sb-section">
+        <div class="sb-item"><span class="ic">⬇</span> Downloads</div>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="core-wrap">
+        <div class="core-center"></div>
+        <h1 class="title">BillyOS</h1>
+        <div class="search-shell">
+          <div class="search-bar">
+            <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" placeholder="Ask BillyOS anything..." />
+            <svg class="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 1a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4M8 22h8"/></svg>
+          </div>
+          <div class="modes">
+            <div class="mode-pill"><span class="sym">✦</span> Deep Research</div>
+            <div class="mode-pill"><span class="sym">◇</span> Visualize</div>
+            <div class="mode-pill"><span class="sym">⌖</span> Find on Map</div>
+            <div class="mode-pill"><span class="sym">▶</span> Explain with Video</div>
+            <div class="mode-pill"><span class="sym">▣</span> Study Mode</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const handle = document.getElementById('sbHandle');
+    const closeBtn = document.getElementById('sbClose');
+    const scrim = document.getElementById('scrim');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      scrim.classList.add('show');
+    }
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      scrim.classList.remove('show');
+    }
+
+    handle.addEventListener('click', openSidebar);
+    closeBtn.addEventListener('click', closeSidebar);
+    scrim.addEventListener('click', closeSidebar);
+
+    // shortcut: Ctrl/Cmd + B toggles, like most editors
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+      }
+    });
+  </script>
+</body>
+</html>
