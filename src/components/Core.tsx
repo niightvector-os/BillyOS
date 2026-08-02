@@ -167,7 +167,7 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
   }, [studyData, mapData, videoData, visualizeData, isListening]);
 
 
-  async function authHeaders() {
+  async function authHeaders(): Promise<Record<string, string>> {
     const supabase = createClient();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
