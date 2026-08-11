@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getErrorStatus } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -37,20 +38,20 @@ export async function POST(req: Request) {
     .map(([k, v]) => `--- ${k} ---\n${v}`)
     .join("\n\n")}`;
 
-  const historyMessages = (history || []).slice(-6).map((m: any) => ({ role: m.role, content: m.content }));
+  const historyMessages = (history || []).slice(-6).map((m: { role: string; content: string }) => ({ role: m.role, content: m.content }));
 
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     async start(controller) {
-      function emit(obj: any) {
+      function emit(obj: Record<string, unknown>) {
         controller.enqueue(encoder.encode(JSON.stringify(obj) + "\n"));
       }
 
       // Real, not simulated: this step is genuinely happening the moment we've received the request.
       emit({ type: "step", label: "Understanding request" });
 
-      let parsed: any = null;
+      let parsed: Record<string, unknown> | null = null;
 
       for (const model of MODEL_FALLBACKS) {
         try {
@@ -70,8 +71,9 @@ export async function POST(req: Request) {
           const raw = completion.choices[0]?.message?.content || "";
           parsed = extractJson(raw);
           break;
-        } catch (err: any) {
-          if (err?.status === 429 || err?.status === 503) continue;
+        } catch (err) {
+          const status = getErrorStatus(err);
+          if (status === 429 || status === 503) continue;
           continue;
         }
       }

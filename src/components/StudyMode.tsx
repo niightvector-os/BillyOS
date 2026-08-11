@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type StudySet = {
+export type StudySet = {
   topic: string;
   summary: string;
   key_concepts: string[];

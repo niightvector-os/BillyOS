@@ -37,7 +37,7 @@ export default function VisualizeDebug({
         {data.needs_live_research ? (
           <div>
             <p style={{ fontSize: 13.5, color: "var(--accent)", marginBottom: 8 }}>
-              Flagged as needing current information — query: "{data.research_query}"
+              Flagged as needing current information — query: &quot;{data.research_query}&quot;
             </p>
             {data.researchFailed && (
               <p style={{ fontSize: 13, color: "var(--ember)" }}>Research fetch failed.</p>

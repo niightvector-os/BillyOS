@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { fetchAllRoutes, RouteResult } from "@/lib/route";
+import { getErrorStatus } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -55,8 +56,8 @@ export async function getLocations(topic: string, limit = 4) {
       });
       parsed = extractJson(completion.choices[0]?.message?.content || "");
       break;
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      if (getErrorStatus(err) === 429 || getErrorStatus(err) === 503) continue;
       continue;
     }
   }
@@ -95,8 +96,8 @@ export async function getRouteIfRequested(topic: string): Promise<RouteQueryResu
       });
       parsed = extractJson(completion.choices[0]?.message?.content || "");
       break;
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      if (getErrorStatus(err) === 429 || getErrorStatus(err) === 503) continue;
       continue;
     }
   }

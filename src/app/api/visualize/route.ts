@@ -1,11 +1,13 @@
 import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
 import { RouterResponseSchema, GENERATIVE_SCHEMAS } from "@/lib/visualize-schema";
+import type { RouterResponse } from "@/lib/visualize-schema";
 import { tavilySearch } from "@/lib/tavily";
 import { getLocations } from "@/lib/geocode";
 import { fetchWikipediaImages } from "@/lib/wikipedia";
 import { searchYoutube } from "@/lib/youtube";
 import { Timer } from "@/lib/timing";
+import { getErrorStatus } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
   const timer = new Timer();
   const { question } = await req.json();
 
-  let routed: any = null;
+  let routed: RouterResponse | null = null;
   for (const model of MODEL_FALLBACKS) {
     try {
       const completion = await openai.chat.completions.create({
@@ -68,8 +70,9 @@ export async function POST(req: Request) {
       if (!parsed.success) continue;
       routed = parsed.data;
       break;
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      const status = getErrorStatus(err);
+      if (status === 429 || status === 503) continue;
       continue;
     }
   }
@@ -94,12 +97,12 @@ export async function POST(req: Request) {
   }
   timer.mark(`research(needed=${routed.needs_live_research})`);
 
-  const blockTypes: string[] = routed.blocks.map((b: any) => b.type).filter((t: string) => t !== "text_only");
+  const blockTypes: string[] = routed.blocks.map((b) => b.type).filter((t: string) => t !== "text_only");
   const generativeTypes = blockTypes.filter((t) => GENERATIVE_SCHEMAS[t]);
-  const finalBlocks: any[] = [];
+  const finalBlocks: { type: string; data: unknown }[] = [];
 
   if (generativeTypes.length > 0) {
-    let generated: Record<string, any> | null = null;
+    let generated: Record<string, unknown> | null = null;
     for (const model of MODEL_FALLBACKS) {
       try {
         const completion = await openai.chat.completions.create({
@@ -112,15 +115,29 @@ export async function POST(req: Request) {
         });
         generated = extractJson(completion.choices[0]?.message?.content || "").generated || null;
         break;
-      } catch (err: any) {
-        if (err?.status === 429 || err?.status === 503) continue;
+      } catch (err) {
+        const status = getErrorStatus(err);
+        if (status === 429 || status === 503) continue;
         continue;
       }
     }
     if (generated) {
       for (const type of generativeTypes) {
         const check = GENERATIVE_SCHEMAS[type].safeParse(generated[type]);
-        if (check.success) finalBlocks.push({ type, data: check.data });
+        if (type === "trip_plan") {
+          const tripData = check.data as { destination: string; thingsToDo: string[] };
+          const encoded = encodeURIComponent(tripData.destination);
+          finalBlocks.push({
+            type,
+            data: {
+              ...tripData,
+              hotelUrl: `https://www.booking.com/searchresults.html?ss=${encoded}`,
+              flightUrl: `https://www.google.com/travel/flights?q=Flights%20to%20${encoded}`,
+            },
+          });
+        } else {
+          finalBlocks.push({ type, data: check.data });
+        }
       }
     }
   }

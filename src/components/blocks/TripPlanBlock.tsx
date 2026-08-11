@@ -29,7 +29,7 @@ export default function TripPlanBlock({
         </ul>
       </div>
 
-      <p className="trip-plan-note">Opens real Booking.com / Google Flights search results in a new tab — BillyOS doesn't pull live prices directly.</p>
+      <p className="trip-plan-note">{"Opens real Booking.com / Google Flights search results in a new tab — BillyOS doesn't pull live prices directly."}</p>
     </div>
   );
 }

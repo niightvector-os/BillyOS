@@ -1,5 +1,9 @@
 import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
+import { getErrorStatus } from "@/lib/errors";
+
+type YoutubeApiItem = { id: { videoId: string }; snippet: { title: string; channelTitle: string; thumbnails?: { medium?: { url: string } } } };
+type YoutubeVideoLike = { id: string };
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -19,7 +23,7 @@ async function youtubeSearch(query: string, maxResults: number) {
   const res = await fetch(url);
   const data = await res.json();
   if (!res.ok || !data.items) return [];
-  return data.items.map((item: any) => ({
+  return data.items.map((item: YoutubeApiItem) => ({
     id: item.id.videoId,
     title: item.snippet.title,
     channel: item.snippet.channelTitle,
@@ -54,15 +58,15 @@ async function getRefinedQuery(topic: string) {
       const q = completion.choices[0]?.message?.content?.trim().replace(/["']/g, "");
       if (q && looksSane(q, topic)) return q;
       return null;
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      if (getErrorStatus(err) === 429 || getErrorStatus(err) === 503) continue;
       continue;
     }
   }
   return null;
 }
 
-function dedupe(videos: any[]) {
+function dedupe(videos: YoutubeVideoLike[]) {
   const seen = new Set();
   return videos.filter((v) => (seen.has(v.id) ? false : (seen.add(v.id), true)));
 }

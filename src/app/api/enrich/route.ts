@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getLocations } from "@/lib/geocode";
+import { getErrorStatus } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -38,13 +39,16 @@ async function classify(message: string) {
         temperature: 0.2,
       });
       return extractJson(completion.choices[0]?.message?.content || "");
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      const status = getErrorStatus(err);
+      if (status === 429 || status === 503) continue;
       continue;
     }
   }
   return null;
 }
+
+type WikiPage = { title: string; fullurl: string; thumbnail?: { source: string } };
 
 async function fetchWikipediaImages(query: string) {
   const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(
@@ -52,11 +56,11 @@ async function fetchWikipediaImages(query: string) {
   )}&gsrlimit=4&prop=pageimages|info&inprop=url&piprop=thumbnail&pithumbsize=500&format=json&origin=*`;
   const res = await fetch(url, { headers: { "User-Agent": "BillyOS/0.1 (personal project)" } });
   const data = await res.json();
-  const pages = data?.query?.pages;
+  const pages = data?.query?.pages as Record<string, WikiPage> | undefined;
   if (!pages) return [];
   return Object.values(pages)
-    .filter((p: any) => p.thumbnail)
-    .map((p: any) => ({ title: p.title, url: p.thumbnail.source, pageUrl: p.fullurl }))
+    .filter((p: WikiPage): p is WikiPage & { thumbnail: { source: string } } => !!p.thumbnail)
+    .map((p) => ({ title: p.title, url: p.thumbnail.source, pageUrl: p.fullurl }))
     .slice(0, 4);
 }
 

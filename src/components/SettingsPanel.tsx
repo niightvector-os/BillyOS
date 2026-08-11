@@ -46,7 +46,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
                 key={l.key}
                 className="map-list-item"
                 style={{ cursor: "pointer", borderColor: profile.complexity === l.key ? "var(--accent)" : "var(--border)" }}
-                onClick={() => updateProfile({ complexity: l.key as any })}
+                onClick={() => updateProfile({ complexity: l.key as "simple" | "normal" | "expert" })}
               >
                 <span className="map-list-name">{l.label} {profile.complexity === l.key && "✓"}</span>
                 <span className="map-list-desc">{l.desc}</span>

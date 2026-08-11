@@ -2,12 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import type { Map as LeafletMap } from "leaflet";
 
-type Location = { name: string; description: string; lat: number; lng: number };
+export type Location = { name: string; description: string; lat: number; lng: number };
 
 export default function InlineMap({ locations }: { locations: Location[] }) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
+  const mapInstance = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
     let cancelled = false;

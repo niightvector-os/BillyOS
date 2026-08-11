@@ -6,14 +6,21 @@ import TimelineBlock from "@/components/blocks/TimelineBlock";
 import ComparisonCardsBlock from "@/components/blocks/ComparisonCardsBlock";
 import TableBlock from "@/components/blocks/TableBlock";
 import TripPlanBlock from "@/components/blocks/TripPlanBlock";
+import type { Location } from "@/components/InlineMap";
+import { z } from "zod";
+import { BarChartData, LineChartData, PieChartData, TimelineData, ComparisonCardsData, TableData, TripPlanData } from "@/lib/visualize-schema";
 
-type VisualizeData = {
+type ImagesBlockData = { images: { url: string; pageUrl: string; title: string }[] };
+type VideoBlockData = { videos: { id: string; title: string }[] };
+type MapBlockData = { locations: Location[] };
+
+export type VisualizeData = {
   question: string;
   summary: string;
   needs_live_research: boolean;
   researchFailed?: boolean;
   sources?: { title: string; url: string }[];
-  blocks: { type: string; data: any }[];
+  blocks: { type: string; data: unknown }[];
 };
 
 export default function VisualizeView({ data, onClose }: { data: VisualizeData; onClose: () => void }) {
@@ -47,18 +54,18 @@ export default function VisualizeView({ data, onClose }: { data: VisualizeData; 
             <div className="visualize-blocks">
               {data.blocks.map((block, i) => {
                 switch (block.type) {
-                  case "bar_chart": return <BarChartBlock key={i} data={block.data} />;
-                  case "line_chart": return <LineChartBlock key={i} data={block.data} />;
-                  case "pie_chart": return <PieChartBlock key={i} data={block.data} />;
-                  case "timeline": return <TimelineBlock key={i} data={block.data} />;
-                  case "comparison_cards": return <ComparisonCardsBlock key={i} data={block.data} />;
-                  case "table": return <TableBlock key={i} data={block.data} />;
-                  case "trip_plan": return <TripPlanBlock key={i} data={block.data} />;
-                  case "map": return <InlineMap key={i} locations={block.data.locations} />;
+                  case "bar_chart": return <BarChartBlock key={i} data={block.data as z.infer<typeof BarChartData>} />;
+                  case "line_chart": return <LineChartBlock key={i} data={block.data as z.infer<typeof LineChartData>} />;
+                  case "pie_chart": return <PieChartBlock key={i} data={block.data as z.infer<typeof PieChartData>} />;
+                  case "timeline": return <TimelineBlock key={i} data={block.data as z.infer<typeof TimelineData>} />;
+                  case "comparison_cards": return <ComparisonCardsBlock key={i} data={block.data as z.infer<typeof ComparisonCardsData>} />;
+                  case "table": return <TableBlock key={i} data={block.data as z.infer<typeof TableData>} />;
+                  case "trip_plan": return <TripPlanBlock key={i} data={block.data as z.infer<typeof TripPlanData> & { hotelUrl: string; flightUrl: string }} />;
+                  case "map": return <InlineMap key={i} locations={(block.data as MapBlockData).locations} />;
                   case "images":
                     return (
                       <div key={i} className="image-strip visualize-image-strip">
-                        {block.data.images.map((img: any, idx: number) => (
+                        {(block.data as ImagesBlockData).images.map((img: { url: string; pageUrl: string; title: string }, idx: number) => (
                           <a key={idx} href={img.pageUrl} target="_blank" rel="noopener noreferrer" className="image-strip-item">
                             <img src={img.url} alt={img.title} loading="lazy" />
                             <span>{img.title}</span>
@@ -71,8 +78,8 @@ export default function VisualizeView({ data, onClose }: { data: VisualizeData; 
                       <div key={i} className="visualize-video-embed">
                         <div className="video-embed" style={{ margin: "8px 0" }}>
                           <iframe
-                            src={`https://www.youtube-nocookie.com/embed/${block.data.videos[0].id}?rel=0`}
-                            title={block.data.videos[0].title}
+                            src={`https://www.youtube-nocookie.com/embed/${(block.data as VideoBlockData).videos[0].id}?rel=0`}
+                            title={(block.data as VideoBlockData).videos[0].title}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                           />

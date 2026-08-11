@@ -17,7 +17,7 @@ type Message = {
 type ConversationSummary = { id: string; title: string; pinned: boolean; mode: string; project_id: string | null };
 type ProjectSummary = { id: string; name: string };
 type Profile = { display_name: string | null; nickname: string | null; occupation: string | null; about_text: string | null; complexity: "simple" | "normal" | "expert" };
-type PendingLoad = { mode: string; title: string; data: any } | null;
+type PendingLoad = { mode: string; title: string; data: Record<string, unknown> } | null;
 
 type ChatContextType = {
   messages: Message[];
@@ -31,7 +31,7 @@ type ChatContextType = {
   pendingLoad: PendingLoad;
   sendMessage: (displayText: string, promptOverride?: string) => Promise<void>;
   sendResearchMessage: (query: string) => Promise<void>;
-  saveModeResult: (mode: string, title: string, data: any) => Promise<void>;
+  saveModeResult: (mode: string, title: string, data: Record<string, unknown>) => Promise<void>;
   requestLoad: (id: string) => Promise<void>;
   clearPendingLoad: () => void;
   stopGeneration: () => void;
@@ -102,9 +102,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshConversations();
-    refreshProjects();
-    refreshProfile();
+    let ignore = false;
+    async function loadInitialData() {
+      if (ignore) return;
+      await Promise.all([refreshConversations(), refreshProjects(), refreshProfile()]);
+    }
+    loadInitialData();
+    return () => {
+      ignore = true;
+    };
   }, [refreshConversations, refreshProjects, refreshProfile]);
 
   function startNewChat(projectId?: string) {
@@ -136,7 +142,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setPendingLoad(null);
   }
 
-  async function saveModeResult(mode: string, title: string, data: any) {
+  async function saveModeResult(mode: string, title: string, data: Record<string, unknown>) {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
     if (!user) return;
@@ -391,7 +397,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   async function sendResearchMessage(query: string) {
     const { user, activeId: ensuredId } = await ensureConversation(query);
-    let activeId = ensuredId;
+    const activeId = ensuredId;
 
     const userMessage: Message = { role: "user", content: query };
     const nextMessages = [...messages, userMessage];

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { getErrorMessage } from "@/lib/errors";
 
 
 const MAX_TOTAL_BYTES = 1024 * 1024 * 1024; // 1GB
@@ -33,7 +34,7 @@ async function extractFromImage(buffer: Buffer, mimeType: string): Promise<strin
             text: "Describe this image thoroughly and transcribe any visible text word-for-word, exactly as written (notes, handwriting, diagrams, charts, whatever is present). Be complete and accurate — this will be used to answer questions about the image later.",
           },
           { type: "image_url", image_url: { url: dataUri } },
-        ] as any,
+        ] as ({ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } })[],
       },
     ],
   });
@@ -96,9 +97,9 @@ export async function POST(req: Request) {
   let extractedText = "";
   try {
     extractedText = await extractText(file);
-  } catch (err: any) {
-    console.log(`[UPLOAD] extraction failed for "${file.name}": ${err?.message || err}`);
-    return Response.json({ error: `Couldn't read that file's content: ${err?.message || "unknown error"}` }, { status: 422 });
+  } catch (err) {
+    console.log(`[UPLOAD] extraction failed for "${file.name}": ${getErrorMessage(err)}`);
+    return Response.json({ error: `Couldn't read that file's content: ${getErrorMessage(err)}` }, { status: 422 });
   }
 
   const storagePath = `${userId}/${Date.now()}-${file.name}`;

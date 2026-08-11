@@ -1,6 +1,15 @@
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
 import { tavilySearch } from "@/lib/tavily";
+import { getErrorStatus } from "@/lib/errors";
+import {
+  DAILY_LIMIT,
+  checkAndIncrementUsage,
+  usageBlockedResponse,
+} from "@/lib/usage";
+
+function todayString() {
+  return new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -12,51 +21,6 @@ const MODEL_FALLBACKS = [
   "nvidia/nemotron-3-super-120b-a12b:free",
   "openai/gpt-oss-20b:free",
 ];
-
-const DAILY_LIMIT = 50;
-
-function todayString() {
-  return new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-}
-
-function nextResetTime() {
-  const now = new Date();
-  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0));
-  return reset;
-}
-
-async function checkAndIncrementUsage(authHeader: string | null) {
-  if (!authHeader) return { userId: null, count: 0, blocked: false };
-
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) return { userId: null, count: 0, blocked: false };
-
-  const userId = userData.user.id;
-  const today = new Date().toISOString().slice(0, 10);
-
-  const { data: row } = await supabase
-    .from("usage_daily")
-    .select("message_count")
-    .eq("user_id", userId)
-    .eq("usage_date", today)
-    .maybeSingle();
-
-  const currentCount = row?.message_count || 0;
-
-  if (currentCount >= DAILY_LIMIT) {
-    return { userId, count: currentCount, blocked: true };
-  }
-
-  const newCount = currentCount + 1;
-  await supabase.from("usage_daily").upsert({ user_id: userId, usage_date: today, message_count: newCount });
-
-  return { userId, count: newCount, blocked: false };
-}
 
 async function needsSearch(question: string): Promise<{ needed: boolean; query: string }> {
   for (const model of MODEL_FALLBACKS) {
@@ -81,7 +45,9 @@ async function needsSearch(question: string): Promise<{ needed: boolean; query: 
   return { needed: false, query: question };
 }
 
-function buildSystemPrompt(complexity: string, personalization?: any, searchContext?: string) {
+type PersonalizationLite = { display_name?: string | null; nickname?: string | null; occupation?: string | null; about_text?: string | null };
+
+function buildSystemPrompt(complexity: string, personalization?: PersonalizationLite, searchContext?: string) {
   const COMPLEXITY_TEXT: Record<string, string> = {
     simple: "Explain in the simplest possible terms, as if to a curious 10-year-old.",
     normal: "Explain at a normal, clear adult level.",
@@ -113,13 +79,11 @@ export async function POST(req: Request) {
   const usage = await checkAndIncrementUsage(authHeader);
 
   if (usage.blocked) {
-    const resetAt = nextResetTime();
-    return Response.json({
-      error: `You're out of messages for today (${DAILY_LIMIT}/day limit). Your limit resets at ${resetAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} — you can still browse your saved chats until then.`,
-    }, { status: 429 });
+    return usageBlockedResponse();
   }
 
-  const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
+  type IncomingMessage = { role: string; content: string };
+  const lastUserMessage = [...(messages as IncomingMessage[])].reverse().find((m) => m.role === "user")?.content || "";
   const check = await needsSearch(lastUserMessage);
   let searchContext = "";
   let sourcesForClient: { title: string; url: string }[] = [];
@@ -162,8 +126,8 @@ export async function POST(req: Request) {
           "X-Billy-Usage-Limit": String(DAILY_LIMIT),
         },
       });
-    } catch (err: any) {
-      const status = err?.status;
+    } catch (err) {
+      const status = getErrorStatus(err);
       if (status === 429 || status === 503) continue;
       return Response.json({ error: "The AI is temporarily unavailable. Please try again shortly." }, { status: 500 });
     }

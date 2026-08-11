@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChat } from "@/lib/chat-context";
-import StudyMode from "@/components/StudyMode";
-import MapView from "@/components/MapView";
+import StudyMode, { StudySet } from "@/components/StudyMode";
+import MapView, { MapData } from "@/components/MapView";
 import InlineMap from "@/components/InlineMap";
-import VideoView from "@/components/VideoView";
-import VisualizeView from "@/components/VisualizeView";
+import VideoView, { VideoData } from "@/components/VideoView";
+import VisualizeView, { VisualizeData } from "@/components/VisualizeView";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/lib/toast-context";
+import { getErrorMessage } from "@/lib/errors";
 
 const MODES = [
   { key: "research", sym: "✦", label: "Deep Research", prefix: "" },
@@ -51,42 +52,62 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMode, setActiveMode] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [studyData, setStudyData] = useState<any>(null);
+  const [studyData, setStudyData] = useState<StudySet | null>(null);
   const [studyLoading, setStudyLoading] = useState(false);
-  const [mapData, setMapData] = useState<any>(null);
+  const [mapData, setMapData] = useState<MapData | null>(null);
   const [mapLoading, setMapLoading] = useState(false);
-  const [videoData, setVideoData] = useState<any>(null);
+  const [videoData, setVideoData] = useState<VideoData | null>(null);
   const [videoLoading, setVideoLoading] = useState(false);
-  const [visualizeData, setVisualizeData] = useState<any>(null);
+  const [visualizeData, setVisualizeData] = useState<VisualizeData | null>(null);
   const [visualizeLoading, setVisualizeLoading] = useState(false);
   const [thinkingWord, setThinkingWord] = useState(THINKING_WORDS[0]);
   const [greeting, setGreeting] = useState("What are we doing today?");
-
-  useEffect(() => {
-    if (messages.length === 0) {
-      setGreeting(pickGreeting(profile.display_name || profile.nickname));
-    }
-  }, [messages.length === 0]);
+  const wasIdleRef = useRef(false);
+  const isIdleNow = messages.length === 0;
+  if (isIdleNow && !wasIdleRef.current) {
+    wasIdleRef.current = true;
+    const nextGreeting = pickGreeting(profile.display_name || profile.nickname);
+    if (nextGreeting !== greeting) setGreeting(nextGreeting);
+  } else if (!isIdleNow && wasIdleRef.current) {
+    wasIdleRef.current = false;
+  }
   const [isListening, setIsListening] = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const stickToBottom = useRef(true);
-  const recognitionRef = useRef<any>(null);
+
+  type SpeechResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
+  type SpeechRecognitionLike = {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start: () => void;
+    stop: () => void;
+    onresult: ((event: SpeechResultEvent) => void) | null;
+    onend: (() => void) | null;
+    onerror: (() => void) | null;
+  };
+  type WindowWithSpeech = Window & {
+    SpeechRecognition?: new () => SpeechRecognitionLike;
+    webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+  };
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const voiceSupported =
+    typeof window !== "undefined" &&
+    !!((window as WindowWithSpeech).SpeechRecognition || (window as WindowWithSpeech).webkitSpeechRecognition);
 
   const busy = studyLoading || mapLoading || videoLoading || visualizeLoading;
 
   useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-    setVoiceSupported(true);
+    const SpeechRecognitionCtor = (window as WindowWithSpeech).SpeechRecognition || (window as WindowWithSpeech).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
 
-    const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognitionCtor();
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = "en-GB";
 
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechResultEvent) => {
       let transcript = "";
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
@@ -113,14 +134,19 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
     }
   }
 
+  const lastPendingLoadRef = useRef<typeof pendingLoad>(null);
+  if (pendingLoad && pendingLoad !== lastPendingLoadRef.current) {
+    lastPendingLoadRef.current = pendingLoad;
+    const payload = pendingLoad.data as Record<string, unknown>;
+    if (pendingLoad.mode === "study") setStudyData(payload as unknown as StudySet);
+    else if (pendingLoad.mode === "map") setMapData({ topic: pendingLoad.title, locations: payload.locations as MapData["locations"] });
+    else if (pendingLoad.mode === "video") setVideoData({ topic: pendingLoad.title, videos: payload.videos as VideoData["videos"] });
+    else if (pendingLoad.mode === "visualize") setVisualizeData({ question: pendingLoad.title, ...payload } as unknown as VisualizeData);
+  }
+
   useEffect(() => {
-    if (!pendingLoad) return;
-    if (pendingLoad.mode === "study") setStudyData(pendingLoad.data);
-    else if (pendingLoad.mode === "map") setMapData({ topic: pendingLoad.title, locations: pendingLoad.data.locations });
-    else if (pendingLoad.mode === "video") setVideoData({ topic: pendingLoad.title, videos: pendingLoad.data.videos });
-    else if (pendingLoad.mode === "visualize") setVisualizeData({ question: pendingLoad.title, ...pendingLoad.data });
-    clearPendingLoad();
-  }, [pendingLoad]);
+    if (pendingLoad) clearPendingLoad();
+  }, [pendingLoad, clearPendingLoad]);
 
   function handleScroll() {
     const el = scrollRef.current;
@@ -208,7 +234,7 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
         if (data.error) throw new Error(data.error);
         setMapData(data);
         saveModeResult("map", data.topic || topic, { locations: data.locations });
-      } catch (err: any) { toast(err.message || "Couldn't find that location — please try again."); }
+      } catch (err) { toast(getErrorMessage(err) || "Couldn't find that location — please try again."); }
       setMapLoading(false);
       return;
     }
@@ -225,7 +251,7 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
         if (data.error) throw new Error(data.error);
         setVideoData(data);
         saveModeResult("video", data.topic || topic, { videos: data.videos });
-      } catch (err: any) { toast(err.message || "Couldn't find a video for that — please try again."); }
+      } catch (err) { toast(getErrorMessage(err) || "Couldn't find a video for that — please try again."); }
       setVideoLoading(false);
       return;
     }
@@ -242,7 +268,7 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
         if (data.error) throw new Error(data.error);
         setVisualizeData({ question, ...data });
         saveModeResult("visualize", question, data);
-      } catch (err: any) { toast(err.message || "Could not analyze that right now — please try again."); }
+      } catch (err) { toast(getErrorMessage(err) || "Could not analyze that right now — please try again."); }
       setVisualizeLoading(false);
       return;
     }
@@ -282,8 +308,8 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setAttachedFile({ filename: data.filename, extractedText: data.extractedText });
-    } catch (err: any) {
-      toast(err.message || "Couldn't upload that file.");
+    } catch (err) {
+      toast(getErrorMessage(err) || "Couldn't upload that file.");
     }
     setUploadingFile(false);
   }

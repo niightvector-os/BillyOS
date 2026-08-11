@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
+import { getErrorStatus, getErrorMessage } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -58,9 +59,10 @@ export async function POST(req: Request) {
       const parsed = extractJson(raw);
       console.log(`[STUDY] model=${model} parsed OK, keys: ${Object.keys(parsed).join(", ")}`);
       return Response.json(parsed);
-    } catch (err: any) {
-      console.log(`[STUDY] model=${model} FAILED: ${err?.message || err}`);
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      const status = getErrorStatus(err);
+      console.log(`[STUDY] model=${model} FAILED: ${getErrorMessage(err)}`);
+      if (status === 429 || status === 503) continue;
       continue;
     }
   }

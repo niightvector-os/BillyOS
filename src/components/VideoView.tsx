@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 type Video = { id: string; title: string; channel: string; thumbnail: string };
+export type VideoData = { topic: string; videos: Video[] };
 
 export default function VideoView({
   topic,

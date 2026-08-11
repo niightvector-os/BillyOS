@@ -25,11 +25,11 @@ export function BarChartBlock({ data }: { data: { title: string; unit?: string; 
 }
 
 export function LineChartBlock({ data }: { data: { title: string; series: { label: string; points: { x: string; y: number }[] }[] } }) {
-  const merged: any[] = [];
+  const merged: Record<string, string | number | null>[] = [];
   const xSet = new Set<string>();
   data.series.forEach((s) => s.points.forEach((p) => xSet.add(p.x)));
   Array.from(xSet).forEach((x) => {
-    const row: any = { x };
+    const row: Record<string, string | number | null> = { x };
     data.series.forEach((s) => {
       const point = s.points.find((p) => p.x === x);
       row[s.label] = point?.y ?? null;

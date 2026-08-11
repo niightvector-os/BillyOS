@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import JSZip from "jszip";
 import { createClient } from "@/lib/supabase/client";
 import { usePrompt } from "@/lib/prompt-context";
+import { getErrorMessage } from "@/lib/errors";
 import { useConfirm } from "@/lib/confirm-context";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -234,9 +235,9 @@ export default function CodeWorkspace({ onExit }: { onExit: () => void }) {
 
       if (!sawError) setTimeout(() => setBuildSteps([]), 900);
       else setBuildSteps([]);
-    } catch (err: any) {
+    } catch (err) {
       setBuildSteps([]);
-      setChatMessages((m) => [...m, { role: "assistant", content: `Sorry, something went wrong: ${err.message || "unknown error"}` }]);
+      setChatMessages((m) => [...m, { role: "assistant", content: `Sorry, something went wrong: ${getErrorMessage(err)}` }]);
     }
     setChatLoading(false);
   }
@@ -340,7 +341,7 @@ export default function CodeWorkspace({ onExit }: { onExit: () => void }) {
         <div className="code-chat">
           <div className="code-chat-messages">
             {chatMessages.length === 0 && (
-              <p className="code-chat-hint">Describe what you want to build — e.g. "Build me a calculator" or "Make a portfolio website."</p>
+              <p className="code-chat-hint">{'Describe what you want to build — e.g. "Build me a calculator" or "Make a portfolio website."'}</p>
             )}
             {chatMessages.map((m, i) => (
               <div key={i} className={`code-chat-msg ${m.role}`}>{m.content}</div>

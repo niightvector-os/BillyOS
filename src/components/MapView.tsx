@@ -2,9 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import type { Map as LeafletMap } from "leaflet";
 
 type Location = { name: string; description: string; lat: number; lng: number };
 type RouteLeg = { distanceKm: number; durationMin: number };
+export type MapData = { topic: string; locations: Location[]; isRoute?: boolean; routes?: Routes };
 type Routes = { driving: RouteLeg | null; walking: RouteLeg | null; cycling: RouteLeg | null; geometry: [number, number][] };
 
 function formatDuration(min: number) {
@@ -28,7 +30,7 @@ export default function MapView({
   onClose: () => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<any>(null);
+  const mapInstance = useRef<LeafletMap | null>(null);
 
   useEffect(() => {
     let cancelled = false;

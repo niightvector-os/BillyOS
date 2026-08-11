@@ -150,7 +150,7 @@ export default function GhostMode({ onExit }: { onExit: () => void }) {
           <div className="ghost-notice-title">Ghost Mode</div>
           <p className="ghost-notice-text">
             This is a temporary conversation. Chats started in Ghost Mode are not saved to your chat history
-            and won't appear alongside your regular conversations. Once you leave this session, it is permanently discarded.
+            and won&apos;t appear alongside your regular conversations. Once you leave this session, it is permanently discarded.
           </p>
           <button className="ghost-notice-dismiss" onClick={() => setNoticeVisible(false)}>Dismiss</button>
         </div>

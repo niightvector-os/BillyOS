@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
 import { tavilySearch } from "@/lib/tavily";
+import { getErrorStatus } from "@/lib/errors";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -58,8 +59,9 @@ export async function POST(req: Request) {
 
       const answer = cleanCitations(completion.choices[0]?.message?.content || "");
       return Response.json({ answer, sources: sources.map((s) => ({ title: s.title, url: s.url })) });
-    } catch (err: any) {
-      if (err?.status === 429 || err?.status === 503) continue;
+    } catch (err) {
+      const status = getErrorStatus(err);
+      if (status === 429 || status === 503) continue;
       continue;
     }
   }
