@@ -397,6 +397,19 @@ export default function Core() {
                     {copiedIndex === i ? "Copied" : "Copy"}
                   </button>
                 )}
+                {m.role === "user" && (
+                  <div className="msg-actions user-msg-actions">
+                    <button className="msg-copy" onClick={() => handleCopy(m.content, i)}>
+                      {copiedIndex === i ? "Copied" : "Copy"}
+                    </button>
+                    <button className="msg-copy" onClick={() => handleEdit(i, m.content)}>
+                      Edit
+                    </button>
+                    <button className="msg-copy" onClick={() => handleRegenerate(m.content, i + 1)}>
+                      Retry
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
