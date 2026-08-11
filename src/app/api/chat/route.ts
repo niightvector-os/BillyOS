@@ -1,11 +1,7 @@
 import OpenAI from "openai";
 import { tavilySearch } from "@/lib/tavily";
 import { getErrorStatus } from "@/lib/errors";
-import {
-  DAILY_LIMIT,
-  checkAndIncrementUsage,
-  usageBlockedResponse,
-} from "@/lib/usage";
+
 
 function todayString() {
   return new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -74,13 +70,6 @@ Rules:
 
 export async function POST(req: Request) {
   const { messages, complexity, personalization } = await req.json();
-  const authHeader = req.headers.get("Authorization");
-
-  const usage = await checkAndIncrementUsage(authHeader);
-
-  if (usage.blocked) {
-    return usageBlockedResponse();
-  }
 
   type IncomingMessage = { role: string; content: string };
   const lastUserMessage = [...(messages as IncomingMessage[])].reverse().find((m) => m.role === "user")?.content || "";
@@ -122,8 +111,6 @@ export async function POST(req: Request) {
         headers: {
           "X-Billy-Searched": check.needed ? "true" : "false",
           "X-Billy-Sources": encodeURIComponent(JSON.stringify(sourcesForClient)),
-          "X-Billy-Usage-Count": String(usage.count),
-          "X-Billy-Usage-Limit": String(DAILY_LIMIT),
         },
       });
     } catch (err) {

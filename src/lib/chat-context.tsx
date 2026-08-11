@@ -97,7 +97,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (data) {
       setProfile(data as Profile);
     } else {
-      await supabase.from("profiles").insert({ id: userData.user.id });
+      await supabase.from("profiles").upsert({ id: userData.user.id }, { onConflict: "id", ignoreDuplicates: true });
     }
   }, []);
 
