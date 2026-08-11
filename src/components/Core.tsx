@@ -43,7 +43,7 @@ function pickGreeting(name?: string | null) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
+export default function Core() {
   const toast = useToast();
   const { messages, loading, isSearching, usageWarning, sendMessage, sendResearchMessage, stopGeneration, saveModeResult, pendingLoad, clearPendingLoad, profile, truncateForEdit } = useChat();
   const [input, setInput] = useState("");
@@ -465,13 +465,6 @@ export default function Core({ onOpenCode }: { onOpenCode: () => void }) {
     </div>
   ))}
 
-  <button
-    type="button"
-    className={`mode-pill ${activeMode === "code" ? "mode-active" : ""}`}
-    onClick={onOpenCode}
-  >
-    <span className="sym">&lt;/&gt;</span> Code
-  </button>
 </div>
 
       </form>
