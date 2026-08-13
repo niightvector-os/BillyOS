@@ -393,20 +393,34 @@ export default function Core() {
                 )}
 
                 {m.role === "assistant" && m.content && (
-                  <button className="msg-copy" onClick={() => handleCopy(m.content, i)}>
-                    {copiedIndex === i ? "Copied" : "Copy"}
-                  </button>
+                  <div className="msg-actions">
+                    <button className="msg-icon-btn" data-tooltip={copiedIndex === i ? "Copied" : "Copy"} onClick={() => handleCopy(m.content, i)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <rect x="9" y="9" width="12" height="12" rx="2" />
+                        <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                      </svg>
+                    </button>
+                  </div>
                 )}
                 {m.role === "user" && (
                   <div className="msg-actions user-msg-actions">
-                    <button className="msg-copy" onClick={() => handleCopy(m.content, i)}>
-                      {copiedIndex === i ? "Copied" : "Copy"}
+                    <button className="msg-icon-btn" data-tooltip={copiedIndex === i ? "Copied" : "Copy"} onClick={() => handleCopy(m.content, i)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <rect x="9" y="9" width="12" height="12" rx="2" />
+                        <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                      </svg>
                     </button>
-                    <button className="msg-copy" onClick={() => handleEdit(i, m.content)}>
-                      Edit
+                    <button className="msg-icon-btn" data-tooltip="Edit" onClick={() => handleEdit(i, m.content)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                      </svg>
                     </button>
-                    <button className="msg-copy" onClick={() => handleRegenerate(m.content, i + 1)}>
-                      Retry
+                    <button className="msg-icon-btn" data-tooltip="Retry" onClick={() => handleRegenerate(m.content, i + 1)}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                        <path d="M21 3v6h-6" />
+                      </svg>
                     </button>
                   </div>
                 )}
