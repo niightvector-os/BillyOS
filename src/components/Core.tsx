@@ -73,7 +73,7 @@ export default function Core() {
   }
   const [isListening, setIsListening] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
 
   type SpeechResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
@@ -425,9 +425,9 @@ export default function Core() {
           <svg className="icon-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
             <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
           </svg>
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
+            rows={1}
             placeholder={
               isListening ? "Listening..." :
               studyLoading ? "Building your study set..." :
@@ -438,7 +438,18 @@ export default function Core() {
               "Ask BillyOS anything..."
             }
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              const el = e.target;
+              el.style.height = "auto";
+              el.style.height = Math.min(el.scrollHeight, 200) + "px";
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
             disabled={busy}
           />
           {voiceSupported && (
