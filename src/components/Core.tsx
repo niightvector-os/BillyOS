@@ -200,10 +200,28 @@ export default function Core() {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
+  function detectModeFromText(text: string): string | null {
+    const t = text.toLowerCase();
+    const researchPatterns = [/\btoday\b/, /\blatest\b/, /\bcurrent(ly)?\b/, /\bright now\b/, /\bthis (year|month|week)\b/, /\b202[4-9]\b/, /\brecent(ly)?\b/, /\bnews\b/, /\bwho won\b/, /\bthe score\b/, /\bhappening\b/, /\bupdate on\b/];
+    if (researchPatterns.some((p) => p.test(t))) return "research";
+
+    const visualizePatterns = [/\bchart\b/, /\bgraph\b/, /\bcompare\b/, /\bcomparison\b/, /\bvisuali[sz]e\b/, /\bplan (a |my )?trip\b/, /\btimeline\b/, /\btable of\b/, /\bpie chart\b/, /\bbar chart\b/, /\bdraw (a|me)\b/, /\bdiagram\b/, /\bpictures? of\b/, /\bimages? of\b/, /\bshow me a\b/];
+    if (visualizePatterns.some((p) => p.test(t))) return "visualize";
+
+    const mapPatterns = [/\bdistance between\b/, /\bhow far is\b/, /\bdirections to\b/, /\bmap of\b/, /\broute to\b/, /\bnear me\b/];
+    if (mapPatterns.some((p) => p.test(t))) return "map";
+
+    const videoPatterns = [/\bvideo (about|on|for)\b/, /\bexplain with a video\b/, /\bshow me a video\b/, /\byoutube video\b/, /\bwatch a video\b/];
+    if (videoPatterns.some((p) => p.test(t))) return "video";
+
+    return null;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading || busy) return;
     if (isListening) { recognitionRef.current?.stop(); setIsListening(false); }
+    const detectedMode = activeMode || detectModeFromText(input);
 
     if (activeMode === "study") {
       const topic = input;
@@ -222,7 +240,7 @@ export default function Core() {
       return;
     }
 
-    if (activeMode === "map") {
+    if (detectedMode === "map") {
       const topic = input;
       setInput(""); setActiveMode(null); setMapLoading(true);
       try {
@@ -239,7 +257,7 @@ export default function Core() {
       return;
     }
 
-    if (activeMode === "video") {
+    if (detectedMode === "video") {
       const topic = input;
       setInput(""); setActiveMode(null); setVideoLoading(true);
       try {
@@ -256,7 +274,7 @@ export default function Core() {
       return;
     }
 
-    if (activeMode === "visualize") {
+    if (detectedMode === "visualize") {
       const question = input;
       setInput(""); setActiveMode(null); setVisualizeLoading(true);
       try {
@@ -273,7 +291,7 @@ export default function Core() {
       return;
     }
 
-    if (activeMode === "research") {
+    if (detectedMode === "research") {
       const query = input;
       setInput(""); setActiveMode(null);
       stickToBottom.current = true;
