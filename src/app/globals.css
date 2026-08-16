@@ -259,16 +259,24 @@ h1.title {
   border-color: var(--accent-dim);
   box-shadow: 0 0 0 4px #7c6cff14, 0 0 40px -10px #7c6cff44;
 }
-.search-bar input {
+.search-bar input,
+.search-bar textarea {
   flex: 1;
   background: none;
   border: none;
   outline: none;
+  resize: none;
   color: var(--text);
   font-family: var(--font-body), sans-serif;
   font-size: 15px;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
 }
-.search-bar input::placeholder {
+.search-bar input::placeholder,
+.search-bar textarea::placeholder {
   color: var(--text-dim);
 }
 .icon-btn {

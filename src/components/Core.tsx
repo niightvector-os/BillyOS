@@ -60,6 +60,7 @@ export default function Core() {
   const [videoLoading, setVideoLoading] = useState(false);
   const [visualizeData, setVisualizeData] = useState<VisualizeData | null>(null);
   const [visualizeLoading, setVisualizeLoading] = useState(false);
+  const [processingMode, setProcessingMode] = useState<string | null>(null);
   const [thinkingWord, setThinkingWord] = useState(THINKING_WORDS[0]);
   const [greeting, setGreeting] = useState("What are we doing today?");
   const wasIdleRef = useRef(false);
@@ -225,7 +226,7 @@ export default function Core() {
 
     if (activeMode === "study") {
       const topic = input;
-      setInput(""); setActiveMode(null); setStudyLoading(true);
+      setInput(""); setActiveMode(null); setStudyLoading(true); setProcessingMode("study");
       try {
         const res = await fetch("/api/study", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -236,13 +237,13 @@ export default function Core() {
         setStudyData(data);
         saveModeResult("study", data.topic || topic, data);
       } catch { toast("Couldn't build a study set right now — please try again."); }
-      setStudyLoading(false);
+      setStudyLoading(false); setProcessingMode(null);
       return;
     }
 
     if (detectedMode === "map") {
       const topic = input;
-      setInput(""); setActiveMode(null); setMapLoading(true);
+      setInput(""); setActiveMode(null); setMapLoading(true); setProcessingMode("map");
       try {
         const res = await fetch("/api/map", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -253,13 +254,13 @@ export default function Core() {
         setMapData(data);
         saveModeResult("map", data.topic || topic, { locations: data.locations });
       } catch (err) { toast(getErrorMessage(err) || "Couldn't find that location — please try again."); }
-      setMapLoading(false);
+      setMapLoading(false); setProcessingMode(null);
       return;
     }
 
     if (detectedMode === "video") {
       const topic = input;
-      setInput(""); setActiveMode(null); setVideoLoading(true);
+      setInput(""); setActiveMode(null); setVideoLoading(true); setProcessingMode("video");
       try {
         const res = await fetch("/api/video", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -270,13 +271,13 @@ export default function Core() {
         setVideoData(data);
         saveModeResult("video", data.topic || topic, { videos: data.videos });
       } catch (err) { toast(getErrorMessage(err) || "Couldn't find a video for that — please try again."); }
-      setVideoLoading(false);
+      setVideoLoading(false); setProcessingMode(null);
       return;
     }
 
     if (detectedMode === "visualize") {
       const question = input;
-      setInput(""); setActiveMode(null); setVisualizeLoading(true);
+      setInput(""); setActiveMode(null); setVisualizeLoading(true); setProcessingMode("visualize");
       try {
         const res = await fetch("/api/visualize", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -287,15 +288,16 @@ export default function Core() {
         setVisualizeData({ question, ...data });
         saveModeResult("visualize", question, data);
       } catch (err) { toast(getErrorMessage(err) || "Could not analyze that right now — please try again."); }
-      setVisualizeLoading(false);
+      setVisualizeLoading(false); setProcessingMode(null);
       return;
     }
 
     if (detectedMode === "research") {
       const query = input;
-      setInput(""); setActiveMode(null);
+      setInput(""); setActiveMode(null); setProcessingMode("research");
       stickToBottom.current = true;
       await sendResearchMessage(query);
+      setProcessingMode(null);
       return;
     }
 
@@ -514,7 +516,7 @@ export default function Core() {
   {MODES.map((m) => (
     <div
       key={m.key}
-      className={`mode-pill ${activeMode === m.key ? "mode-active" : ""}`}
+      className={`mode-pill ${activeMode === m.key || processingMode === m.key ? "mode-active" : ""}`}
       onClick={() => setActiveMode(activeMode === m.key ? null : m.key)}
     >
       <span className="sym">{m.sym}</span> {m.label}
