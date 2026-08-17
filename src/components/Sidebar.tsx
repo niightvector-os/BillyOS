@@ -100,7 +100,7 @@ export default function Sidebar({ ghostActive = false }: { ghostActive?: boolean
 
       <aside className={`sidebar ${open ? "open" : ""}`}>
         <div className="sb-top">
-          <div className="sb-brand"><span className="dot" /> BILLYOS</div>
+          <div className="sb-brand"><img src="/favicons/logo-mark-32.png" alt="" className="dot" /> BILLYOS</div>
           <button className="sb-close" onClick={() => setOpen(false)} aria-label="Close sidebar">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path d="M18 6 6 18M6 6l12 12" />

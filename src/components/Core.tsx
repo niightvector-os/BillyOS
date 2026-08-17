@@ -362,7 +362,7 @@ export default function Core() {
     <>
       {idle && (
         <div className="core-wrap">
-          <div className="core-center" />
+          <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="core-center" />
           <div className="core-wordmark">BillyOS</div>
           <h1 className="title">{greeting}</h1>
         </div>
