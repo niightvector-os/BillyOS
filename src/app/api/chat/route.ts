@@ -18,27 +18,15 @@ const MODEL_FALLBACKS = [
   "openai/gpt-oss-20b:free",
 ];
 
-async function needsSearch(question: string): Promise<{ needed: boolean; query: string }> {
-  for (const model of MODEL_FALLBACKS) {
-    try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [
-          { role: "system", content: `Today is ${todayString()}. Decide if answering this message well requires current/recent real-world information. Respond with ONLY JSON: {"needed": true or false, "query": "search query if needed, else empty string"}` },
-          { role: "user", content: question },
-        ],
-        temperature: 0.1,
-        max_tokens: 150,
-      });
-      const raw = completion.choices[0]?.message?.content || "{}";
-      const cleaned = raw.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(cleaned.slice(cleaned.indexOf("{"), cleaned.lastIndexOf("}") + 1));
-      return { needed: !!parsed.needed, query: parsed.query || question };
-    } catch {
-      continue;
-    }
-  }
-  return { needed: false, query: question };
+function needsSearch(question: string): { needed: boolean; query: string } {
+  const t = question.toLowerCase();
+  const patterns = [
+    /\btoday\b/, /\blatest\b/, /\bcurrent(ly)?\b/, /\bright now\b/,
+    /\bthis (year|month|week)\b/, /\b202[4-9]\b/, /\brecent(ly)?\b/, /\bnews\b/,
+    /\bwho won\b/, /\bthe score\b/, /\bhappening\b/, /\bupdate on\b/,
+    /\bwhat(\'s| is)? (happening|going on)\b/,
+  ];
+  return { needed: patterns.some((p) => p.test(t)), query: question };
 }
 
 type PersonalizationLite = { display_name?: string | null; nickname?: string | null; occupation?: string | null; about_text?: string | null };
@@ -82,7 +70,7 @@ export async function POST(req: Request) {
 
   type IncomingMessage = { role: string; content: string };
   const lastUserMessage = [...(messages as IncomingMessage[])].reverse().find((m) => m.role === "user")?.content || "";
-  const check = await needsSearch(lastUserMessage);
+  const check = needsSearch(lastUserMessage);
   let searchContext = "";
   let sourcesForClient: { title: string; url: string }[] = [];
 
