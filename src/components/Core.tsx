@@ -222,7 +222,23 @@ export default function Core() {
     e.preventDefault();
     if (!input.trim() || loading || busy) return;
     if (isListening) { recognitionRef.current?.stop(); setIsListening(false); }
-    const detectedMode = activeMode || detectModeFromText(input);
+    let detectedMode = activeMode || detectModeFromText(input);
+
+    if (!detectedMode) {
+      setProcessingMode("thinking");
+      try {
+        const res = await fetch("/api/classify-mode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: input }),
+        });
+        const data = await res.json();
+        if (data.mode && data.mode !== "none") detectedMode = data.mode;
+      } catch {
+        // classifier failed — fall through to plain chat, never block
+      }
+      setProcessingMode(null);
+    }
 
     if (activeMode === "study") {
       const topic = input;
