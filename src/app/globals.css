@@ -2119,3 +2119,53 @@ h1.title {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+.auth-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #ffffff14;
+  background: linear-gradient(180deg, #ffffff08, #ffffff02);
+  color: #f2f2f5;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.auth-google:hover {
+  border-color: #7C6CFF55;
+  box-shadow: 0 0 0 1px #7C6CFF22, 0 12px 30px -10px #7C6CFF44, 0 0 24px -8px #7C6CFF33;
+  transform: translateY(-1px);
+}
+
+.auth-google:active {
+  transform: translateY(0);
+}
+
+.auth-google svg {
+  flex-shrink: 0;
+}
+
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #ffffff44;
+  font-size: 12px;
+  font-family: var(--font-display), sans-serif;
+}
+
+.auth-or::before,
+.auth-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #ffffff14;
+}
