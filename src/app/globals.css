@@ -390,11 +390,9 @@ h1.title {
   text-align: center;
 }
 .auth-orb {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ember);
-  box-shadow: 0 0 18px 4px var(--ember), 0 0 46px 14px #FF6B4A22;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
   margin-bottom: 22px;
 }
 .auth-title {
@@ -537,11 +535,9 @@ h1.title {
   text-align: center;
 }
 .auth-orb {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--ember);
-  box-shadow: 0 0 18px 4px var(--ember), 0 0 46px 14px #FF6B4A22;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
   margin-bottom: 22px;
 }
 .auth-title {

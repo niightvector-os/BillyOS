@@ -43,7 +43,7 @@ export default function LoginPage() {
       <Link href="/" className="auth-back">← BillyOS</Link>
 
       <div className="auth-card">
-        <div className="auth-orb" />
+        <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="auth-orb" />
         <h1 className="auth-title">{mode === "signin" ? "Welcome back" : "Create your account"}</h1>
         <p className="auth-sub">
           {mode === "signin" ? "Sign in to continue to BillyOS" : "Join BillyOS in seconds"}
