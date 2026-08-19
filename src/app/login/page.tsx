@@ -109,7 +109,9 @@ export default function LoginPage() {
         </button>
       </div>
 
-      <div className="auth-credit">BillyOS by Billy Nandy</div>
+      <div className="auth-credit">
+        BillyOS by Billy Nandy · <Link href="/privacy">Privacy Policy</Link>
+      </div>
     </main>
   );
 }

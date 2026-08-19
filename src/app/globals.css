@@ -2169,3 +2169,57 @@ h1.title {
   height: 1px;
   background: #ffffff14;
 }
+
+.privacy-stage {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 60px 24px 80px;
+  background: var(--bg, #0a0a0c);
+}
+
+.privacy-card {
+  max-width: 680px;
+  width: 100%;
+  color: #e8e8ec;
+  line-height: 1.7;
+}
+
+.privacy-card h1 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.privacy-updated {
+  color: #ffffff55;
+  font-size: 13px;
+  margin-bottom: 28px;
+}
+
+.privacy-card h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 18px;
+  margin-top: 32px;
+  margin-bottom: 10px;
+  color: #f2f2f5;
+}
+
+.privacy-card p {
+  color: #cfcfd6;
+  margin-bottom: 12px;
+}
+
+.privacy-card ul {
+  margin: 0 0 12px 20px;
+  color: #cfcfd6;
+}
+
+.privacy-card li {
+  margin-bottom: 6px;
+}
+
+.privacy-card a {
+  color: #A69BFF;
+  text-decoration: underline;
+}
