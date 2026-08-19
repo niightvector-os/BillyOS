@@ -2229,19 +2229,24 @@ h1.title {
   max-height: 100vh;
 }
 
-.privacy-stage::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: 10px;
 }
 
-.privacy-stage::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.privacy-stage::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #7C6CFF44;
   border-radius: 8px;
 }
 
-.privacy-stage::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #7C6CFF77;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7C6CFF44 transparent;
 }
