@@ -107,10 +107,10 @@ export default function LoginPage() {
         >
           {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
         </button>
-      </div>
 
-      <div className="auth-credit">
-        BillyOS by Billy Nandy · <Link href="/privacy">Privacy Policy</Link>
+        <div className="auth-credit">
+          BillyOS by Billy Nandy · <Link href="/privacy">Privacy Policy</Link>
+        </div>
       </div>
     </main>
   );
