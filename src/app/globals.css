@@ -852,13 +852,13 @@ h1.title {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #ffffff22 transparent;
+  scrollbar-color: #7C6CFF44 transparent;
 }
 .conversation::-webkit-scrollbar {
   width: 5px;
 }
 .conversation::-webkit-scrollbar-thumb {
-  background: #ffffff22;
+  background: #7C6CFF44;
   border-radius: 10px;
 }
 
@@ -879,10 +879,10 @@ h1.title {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: #ffffff22 transparent;
+  scrollbar-color: #7C6CFF44 transparent;
 }
 .conversation-full::-webkit-scrollbar { width: 5px; }
-.conversation-full::-webkit-scrollbar-thumb { background: #ffffff22; border-radius: 10px; }
+.conversation-full::-webkit-scrollbar-thumb { background: #7C6CFF44; border-radius: 10px; }
 
 .conversation-inner {
   max-width: 720px;
