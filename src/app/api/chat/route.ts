@@ -1,6 +1,6 @@
 import { tavilySearch } from "@/lib/tavily";
 import { createChatStream } from "@/lib/ai-providers";
-
+import { checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 
 function todayString() {
   return new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -54,6 +54,13 @@ Rules:
 }
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  }
+
   const { messages, complexity, personalization } = await req.json();
 
   type IncomingMessage = { role: string; content: string };

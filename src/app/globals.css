@@ -2250,3 +2250,96 @@ h1.title {
   scrollbar-width: thin;
   scrollbar-color: #7C6CFF44 transparent;
 }
+
+.signup-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000000aa;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.signup-modal-card {
+  position: relative;
+  max-width: 400px;
+  width: 100%;
+  background: #111114;
+  border: 1px solid var(--border, #ffffff14);
+  border-radius: 16px;
+  box-shadow: 0 0 0 1px #ffffff05, 0 30px 80px -20px #7C6CFF33, 0 0 60px -20px #7C6CFF22;
+  padding: 32px 28px 28px;
+  text-align: center;
+}
+
+.signup-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: #ffffff77;
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.signup-modal-close:hover {
+  color: #ffffff;
+}
+
+.signup-modal-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+}
+
+.signup-modal-card h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #f2f2f5;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.signup-modal-card p {
+  color: #ffffff99;
+  font-size: 14px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.signup-modal-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #ffffff14;
+  background: linear-gradient(180deg, #ffffff08, #ffffff02);
+  color: #f2f2f5;
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.signup-modal-google:hover {
+  border-color: #7C6CFF55;
+  box-shadow: 0 0 0 1px #7C6CFF22, 0 12px 30px -10px #7C6CFF44;
+}
+
+.signup-modal-email {
+  display: block;
+  margin-top: 14px;
+  color: #A69BFF;
+  font-size: 13px;
+  text-decoration: underline;
+}

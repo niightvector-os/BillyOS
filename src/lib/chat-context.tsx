@@ -24,6 +24,8 @@ type ChatContextType = {
   loading: boolean;
   isSearching: boolean;
   usageWarning: string | null;
+  signupPromptOpen: boolean;
+  closeSignupPrompt: () => void;
   conversations: ConversationSummary[];
   projects: ProjectSummary[];
   profile: Profile;
@@ -57,6 +59,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [usageWarning, setUsageWarning] = useState<string | null>(null);
+  const [signupPromptOpen, setSignupPromptOpen] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [profile, setProfile] = useState<Profile>({ display_name: null, nickname: null, occupation: null, about_text: null, complexity: "normal" });
@@ -64,6 +67,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const pendingProjectId = useRef<string | undefined>(undefined);
   const controllerRef = useRef<AbortController | null>(null);
   const supabase = createClient();
+
+  const closeSignupPrompt = useCallback(() => setSignupPromptOpen(false), []);
 
   const refreshConversations = useCallback(async () => {
     const { data: userData } = await supabase.auth.getUser();
@@ -341,8 +346,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (!res.ok) {
         setIsSearching(false);
         const err = await res.json().catch(() => null);
-        assistantMsg = { ...assistantMsg, content: err?.error || "Sorry — the AI is temporarily unavailable. Please try again." };
-        setMessages([...nextMessages, { ...assistantMsg }]);
+        if (err?.code === "ANON_LIMIT_REACHED") {
+          setSignupPromptOpen(true);
+          setMessages(nextMessages); // drop the empty assistant placeholder — no error bubble for this case
+        } else {
+          assistantMsg = { ...assistantMsg, content: err?.error || "Sorry — the AI is temporarily unavailable. Please try again." };
+          setMessages([...nextMessages, { ...assistantMsg }]);
+        }
       } else {
         const reader = res.body?.getReader();
         const decoder = new TextDecoder();
@@ -471,6 +481,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         loading,
         isSearching,
         usageWarning,
+        signupPromptOpen,
+        closeSignupPrompt,
         conversations,
         projects,
         profile,
