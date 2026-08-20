@@ -1,18 +1,6 @@
-import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
 import { tavilySearch } from "@/lib/tavily";
-import { getErrorStatus } from "@/lib/errors";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-const MODEL_FALLBACKS = [
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "openai/gpt-oss-20b:free",
-];
+import { createChatCompletion } from "@/lib/ai-providers";
 
 function buildSystemPrompt(sources: { title: string; url: string; content: string }[]) {
   const sourceBlock = sources.map((s, i) => `[${i + 1}] ${s.title}\n${s.content.slice(0, 600)}`).join("\n\n");
@@ -22,7 +10,6 @@ Rules:
 - Cite claims using ONLY simple bracket numbers like [1] or [2], matching the source list below. NEVER use any other citation format such as 【2†L1-L2】 or similar tool-generated syntax — plain [1], [2] only, nothing else.
 - Never use LaTeX. Plain text formulas only.
 - Be concise.
-
 SOURCES:
 ${sourceBlock}`;
 }
@@ -35,36 +22,24 @@ function cleanCitations(text: string) {
 export async function POST(req: Request) {
   const usage = await checkAndIncrementUsage(req.headers.get("Authorization"));
   if (usage.blocked) return usageBlockedResponse();
-
   const { query } = await req.json();
-
   let sources;
   try {
     sources = await tavilySearch(query);
   } catch {
     return Response.json({ error: "Web search is temporarily unavailable. Please try again shortly." }, { status: 502 });
   }
-
   if (sources.length === 0) {
     return Response.json({ error: "No relevant sources found for that." }, { status: 404 });
   }
 
-  for (const model of MODEL_FALLBACKS) {
-    try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [{ role: "system", content: buildSystemPrompt(sources) }, { role: "user", content: query }],
-        temperature: 0.3,
-      });
-
-      const answer = cleanCitations(completion.choices[0]?.message?.content || "");
-      return Response.json({ answer, sources: sources.map((s) => ({ title: s.title, url: s.url })) });
-    } catch (err) {
-      const status = getErrorStatus(err);
-      if (status === 429 || status === 503) continue;
-      continue;
-    }
+  const raw = await createChatCompletion(buildSystemPrompt(sources), query, 0.3);
+  if (raw === null) {
+    return Response.json(
+      { error: "BillyOS's free daily AI usage across all providers is used up for today. This resets at midnight UTC — please come back then." },
+      { status: 503 }
+    );
   }
-
-  return Response.json({ error: "BillyOS's free daily AI usage is used up for today. This resets at midnight UTC — please come back then." }, { status: 503 });
+  const answer = cleanCitations(raw);
+  return Response.json({ answer, sources: sources.map((s) => ({ title: s.title, url: s.url })) });
 }

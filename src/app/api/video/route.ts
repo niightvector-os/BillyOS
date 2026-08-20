@@ -1,20 +1,8 @@
-import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
-import { getErrorStatus } from "@/lib/errors";
+import { createChatCompletion } from "@/lib/ai-providers";
 
 type YoutubeApiItem = { id: { videoId: string }; snippet: { title: string; channelTitle: string; thumbnails?: { medium?: { url: string } } } };
 type YoutubeVideoLike = { id: string };
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-const MODEL_FALLBACKS = [
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "openai/gpt-oss-20b:free",
-];
 
 async function youtubeSearch(query: string, maxResults: number) {
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&order=relevance&maxResults=${maxResults}&q=${encodeURIComponent(
@@ -40,29 +28,14 @@ function looksSane(query: string, originalTopic: string) {
 }
 
 async function getRefinedQuery(topic: string) {
-  for (const model of MODEL_FALLBACKS) {
-    try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "Turn the user's topic into the exact short keyword phrase someone would type into YouTube's search bar — 3-6 words, specific proper nouns/terms only, no filler. Reply with ONLY the search phrase, nothing else.",
-          },
-          { role: "user", content: topic },
-        ],
-        temperature: 0.2,
-        max_tokens: 20,
-      });
-      const q = completion.choices[0]?.message?.content?.trim().replace(/["']/g, "");
-      if (q && looksSane(q, topic)) return q;
-      return null;
-    } catch (err) {
-      if (getErrorStatus(err) === 429 || getErrorStatus(err) === 503) continue;
-      continue;
-    }
-  }
+  const raw = await createChatCompletion(
+    "Turn the user's topic into the exact short keyword phrase someone would type into YouTube's search bar — 3-6 words, specific proper nouns/terms only, no filler. Reply with ONLY the search phrase, nothing else.",
+    topic,
+    0.2
+  );
+  if (!raw) return null;
+  const q = raw.trim().replace(/["']/g, "");
+  if (q && looksSane(q, topic)) return q;
   return null;
 }
 

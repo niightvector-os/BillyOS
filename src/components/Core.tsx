@@ -206,7 +206,7 @@ export default function Core() {
     const researchPatterns = [/\btoday\b/, /\blatest\b/, /\bcurrent(ly)?\b/, /\bright now\b/, /\bthis (year|month|week)\b/, /\b202[4-9]\b/, /\brecent(ly)?\b/, /\bnews\b/, /\bwho won\b/, /\bthe score\b/, /\bhappening\b/, /\bupdate on\b/];
     if (researchPatterns.some((p) => p.test(t))) return "research";
 
-    const visualizePatterns = [/\bchart\b/, /\bgraph\b/, /\bcompare\b/, /\bcomparison\b/, /\bvisuali[sz]e\b/, /\bplan (a |my )?trip\b/, /\btimeline\b/, /\btable of\b/, /\bpie chart\b/, /\bbar chart\b/, /\bdraw (a|me)\b/, /\bdiagram\b/, /\bpictures? of\b/, /\bimages? of\b/, /\bshow me a\b/];
+    const visualizePatterns = [/\bchart\b/, /\bgraph\b/, /\bcompare\b/, /\bcomparison\b/, /\bvisuali[sz]e\b/, /\bplan (me )?(a |my )?trip\b/, /\btimeline\b/, /\btable of\b/, /\bpie chart\b/, /\bbar chart\b/, /\bdraw (a|me)\b/, /\bdiagram\b/, /\bpictures? of\b/, /\bimages? of\b/, /\bshow me a\b/];
     if (visualizePatterns.some((p) => p.test(t))) return "visualize";
 
     const mapPatterns = [/\bdistance between\b/, /\bhow far is\b/, /\bdirections to\b/, /\bmap of\b/, /\broute to\b/, /\bnear me\b/];

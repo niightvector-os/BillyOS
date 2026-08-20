@@ -1,22 +1,10 @@
-import OpenAI from "openai";
 import { tavilySearch } from "@/lib/tavily";
-import { getErrorStatus } from "@/lib/errors";
+import { createChatStream } from "@/lib/ai-providers";
 
 
 function todayString() {
   return new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-const MODEL_FALLBACKS = [
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "openai/gpt-oss-20b:free",
-];
 
 function needsSearch(question: string): { needed: boolean; query: string } {
   const t = question.toLowerCase();
@@ -84,38 +72,8 @@ export async function POST(req: Request) {
 
   const systemPrompt = buildSystemPrompt(complexity, personalization, searchContext || undefined);
 
-  for (const model of MODEL_FALLBACKS) {
-    try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-        temperature: 0.4,
-        stream: true,
-      });
-
-      const encoder = new TextEncoder();
-      const stream = new ReadableStream({
-        async start(controller) {
-          for await (const chunk of completion) {
-            const content = chunk.choices[0]?.delta?.content || "";
-            if (content) controller.enqueue(encoder.encode(content));
-          }
-          controller.close();
-        },
-      });
-
-      return new Response(stream, {
-        headers: {
-          "X-Billy-Searched": check.needed ? "true" : "false",
-          "X-Billy-Sources": encodeURIComponent(JSON.stringify(sourcesForClient)),
-        },
-      });
-    } catch (err) {
-      const status = getErrorStatus(err);
-      if (status === 429 || status === 503) continue;
-      return Response.json({ error: "The AI is temporarily unavailable. Please try again shortly." }, { status: 500 });
-    }
-  }
-
-  return Response.json({ error: "BillyOS's free daily AI usage is used up for today. This resets at midnight UTC — please come back then." }, { status: 503 });
+  return createChatStream(systemPrompt, messages, {
+    "X-Billy-Searched": check.needed ? "true" : "false",
+    "X-Billy-Sources": encodeURIComponent(JSON.stringify(sourcesForClient)),
+  });
 }

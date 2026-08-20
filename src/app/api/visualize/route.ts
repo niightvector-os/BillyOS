@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
 import { RouterResponseSchema, GENERATIVE_SCHEMAS } from "@/lib/visualize-schema";
 import type { RouterResponse } from "@/lib/visualize-schema";
@@ -7,18 +6,7 @@ import { getLocations } from "@/lib/geocode";
 import { fetchWikipediaImages } from "@/lib/wikipedia";
 import { searchYoutube } from "@/lib/youtube";
 import { Timer } from "@/lib/timing";
-import { getErrorStatus } from "@/lib/errors";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-const MODEL_FALLBACKS = [
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "openai/gpt-oss-20b:free",
-];
+import { createChatCompletion } from "@/lib/ai-providers";
 
 function extractJson(text: string) {
   const cleaned = text.replace(/```json|```/g, "").trim();
@@ -59,27 +47,20 @@ export async function POST(req: Request) {
   const { question } = await req.json();
 
   let routed: RouterResponse | null = null;
-  for (const model of MODEL_FALLBACKS) {
+  const routerRaw = await createChatCompletion(buildRouterSystem(), question, 0.2);
+  if (routerRaw !== null) {
     try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [{ role: "system", content: buildRouterSystem() }, { role: "user", content: question }],
-        temperature: 0.2,
-      });
-      const parsed = RouterResponseSchema.safeParse(extractJson(completion.choices[0]?.message?.content || ""));
-      if (!parsed.success) continue;
-      routed = parsed.data;
-      break;
-    } catch (err) {
-      const status = getErrorStatus(err);
-      if (status === 429 || status === 503) continue;
-      continue;
-    }
+      const parsed = RouterResponseSchema.safeParse(extractJson(routerRaw));
+      if (parsed.success) routed = parsed.data;
+    } catch {}
   }
   timer.mark("classify");
   if (!routed) {
     timer.log("/api/visualize [classify failed]");
-    return Response.json({ error: "BillyOS's free daily AI usage is used up for today. This resets at midnight UTC — please come back then." }, { status: 503 });
+    return Response.json(
+      { error: "BillyOS's free daily AI usage across all providers is used up for today. This resets at midnight UTC — please come back then." },
+      { status: 503 }
+    );
   }
 
   let sourcesForGeneration: { title: string; content: string }[] = [];
@@ -103,23 +84,15 @@ export async function POST(req: Request) {
 
   if (generativeTypes.length > 0) {
     let generated: Record<string, unknown> | null = null;
-    for (const model of MODEL_FALLBACKS) {
+    const genRaw = await createChatCompletion(
+      buildGenerationSystem(generativeTypes, routed.needs_live_research ? sourcesForGeneration : null),
+      question,
+      0.3
+    );
+    if (genRaw !== null) {
       try {
-        const completion = await openai.chat.completions.create({
-          model,
-          messages: [
-            { role: "system", content: buildGenerationSystem(generativeTypes, routed.needs_live_research ? sourcesForGeneration : null) },
-            { role: "user", content: question },
-          ],
-          temperature: 0.3,
-        });
-        generated = extractJson(completion.choices[0]?.message?.content || "").generated || null;
-        break;
-      } catch (err) {
-        const status = getErrorStatus(err);
-        if (status === 429 || status === 503) continue;
-        continue;
-      }
+        generated = extractJson(genRaw).generated || null;
+      } catch {}
     }
     if (generated) {
       for (const type of generativeTypes) {

@@ -1,17 +1,5 @@
-import OpenAI from "openai";
 import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
-import { getErrorStatus, getErrorMessage } from "@/lib/errors";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-});
-
-const MODEL_FALLBACKS = [
-  "google/gemma-4-31b-it:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "openai/gpt-oss-20b:free",
-];
+import { createChatCompletion } from "@/lib/ai-providers";
 
 const SYSTEM_PROMPT = `You are BillyOS's Study Mode. Given a topic, produce a study set.
 Respond with ONLY valid JSON, no markdown fences, no commentary, matching exactly this shape:
@@ -41,32 +29,25 @@ export async function POST(req: Request) {
   const { topic } = await req.json();
   console.log(`[STUDY] topic="${topic}"`);
 
-  for (const model of MODEL_FALLBACKS) {
-    try {
-      const completion = await openai.chat.completions.create({
-        model,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: topic },
-        ],
-        temperature: 0.4,
-      });
+  const raw = await createChatCompletion(SYSTEM_PROMPT, topic, 0.4);
 
-      const raw = completion.choices[0]?.message?.content || "";
-      console.log(`[STUDY] model=${model} raw length=${raw.length}`);
-      console.log(`[STUDY] model=${model} raw (first 300 chars): ${raw.slice(0, 300)}`);
-
-      const parsed = extractJson(raw);
-      console.log(`[STUDY] model=${model} parsed OK, keys: ${Object.keys(parsed).join(", ")}`);
-      return Response.json(parsed);
-    } catch (err) {
-      const status = getErrorStatus(err);
-      console.log(`[STUDY] model=${model} FAILED: ${getErrorMessage(err)}`);
-      if (status === 429 || status === 503) continue;
-      continue;
-    }
+  if (raw === null) {
+    console.log(`[STUDY] all providers exhausted`);
+    return Response.json(
+      { error: "BillyOS's free daily AI usage across all providers is used up for today. This resets at midnight UTC — please come back then." },
+      { status: 503 }
+    );
   }
 
-  console.log(`[STUDY] all models exhausted`);
-  return Response.json({ error: "BillyOS's free daily AI usage is used up for today. This resets at midnight UTC — please come back then." }, { status: 503 });
+  console.log(`[STUDY] raw length=${raw.length}`);
+  console.log(`[STUDY] raw (first 300 chars): ${raw.slice(0, 300)}`);
+
+  try {
+    const parsed = extractJson(raw);
+    console.log(`[STUDY] parsed OK, keys: ${Object.keys(parsed).join(", ")}`);
+    return Response.json(parsed);
+  } catch (err) {
+    console.log(`[STUDY] JSON parse FAILED: ${(err as Error).message}`);
+    return Response.json({ error: "Couldn't build a study set right now — please try again." }, { status: 500 });
+  }
 }
