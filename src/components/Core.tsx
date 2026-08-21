@@ -246,7 +246,7 @@ export default function Core() {
       try {
         const res = await fetch("/api/study", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-          body: JSON.stringify({ topic }),
+          body: JSON.stringify({ topic, preferred_language: profile.preferred_language }),
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
@@ -280,7 +280,7 @@ export default function Core() {
       try {
         const res = await fetch("/api/video", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-          body: JSON.stringify({ topic }),
+          body: JSON.stringify({ topic, preferred_language: profile.preferred_language }),
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
@@ -297,7 +297,7 @@ export default function Core() {
       try {
         const res = await fetch("/api/visualize", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, preferred_language: profile.preferred_language }),
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);

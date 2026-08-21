@@ -16,7 +16,7 @@ type Message = {
 };
 type ConversationSummary = { id: string; title: string; pinned: boolean; mode: string; project_id: string | null };
 type ProjectSummary = { id: string; name: string };
-type Profile = { display_name: string | null; nickname: string | null; occupation: string | null; about_text: string | null; complexity: "simple" | "normal" | "expert" };
+type Profile = { display_name: string | null; nickname: string | null; occupation: string | null; about_text: string | null; complexity: "simple" | "normal" | "expert"; preferred_language: string };
 type PendingLoad = { mode: string; title: string; data: Record<string, unknown> } | null;
 
 type ChatContextType = {
@@ -62,7 +62,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [signupPromptOpen, setSignupPromptOpen] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [profile, setProfile] = useState<Profile>({ display_name: null, nickname: null, occupation: null, about_text: null, complexity: "normal" });
+  const [profile, setProfile] = useState<Profile>({ display_name: null, nickname: null, occupation: null, about_text: null, complexity: "normal", preferred_language: "en" });
   const [pendingLoad, setPendingLoad] = useState<PendingLoad>(null);
   const pendingProjectId = useRef<string | undefined>(undefined);
   const controllerRef = useRef<AbortController | null>(null);
@@ -96,7 +96,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!userData.user) return;
     const { data } = await supabase
       .from("profiles")
-      .select("display_name, nickname, occupation, about_text, complexity")
+      .select("display_name, nickname, occupation, about_text, complexity, preferred_language")
       .eq("id", userData.user.id)
       .single();
     if (data) {
@@ -428,7 +428,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, preferred_language: profile.preferred_language }),
       });
       const data = await res.json();
 

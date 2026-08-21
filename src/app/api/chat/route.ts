@@ -17,7 +17,7 @@ function needsSearch(question: string): { needed: boolean; query: string } {
   return { needed: patterns.some((p) => p.test(t)), query: question };
 }
 
-type PersonalizationLite = { display_name?: string | null; nickname?: string | null; occupation?: string | null; about_text?: string | null };
+type PersonalizationLite = { display_name?: string | null; nickname?: string | null; occupation?: string | null; about_text?: string | null; preferred_language?: string };
 
 function buildSystemPrompt(complexity: string, personalization?: PersonalizationLite, searchContext?: string) {
   const COMPLEXITY_TEXT: Record<string, string> = {
@@ -37,6 +37,9 @@ function buildSystemPrompt(complexity: string, personalization?: Personalization
   const searchBlock = searchContext
     ? `\n\nYou have real, current search results below from ${todayString()}. Use them as your primary source and cite with [1], [2] etc:\n${searchContext}`
     : `\n\nToday's real date is ${todayString()}. If unsure about something recent, say so rather than guessing.`;
+  const languageBlock = personalization?.preferred_language && personalization.preferred_language !== "en"
+    ? `\n\nRespond entirely in the language with ISO code "${personalization.preferred_language}" — including greetings, explanations, and any headers. Do not mix in English unless the user's message is in English.`
+    : "";
   return `You are BillyOS, built by Billy Nandy, with guidance and direction from Ahmed Ghazi.
 
 If someone asks what you are or what you can do, answer in short, simple, everyday words — no jargon, no technical terms. Describe yourself as a helpful AI assistant that can:
@@ -50,7 +53,7 @@ Do not describe technical limits like "I cannot access the internet" or "I canno
 
 Rules:
 - UK English spelling. Never invent facts. Never use LaTeX. Format with proper markdown, and use short paragraphs (2-4 sentences each) rather than one long block of text.
-- ${COMPLEXITY_TEXT[complexity] || COMPLEXITY_TEXT.normal}${personal}${searchBlock}`;
+- ${COMPLEXITY_TEXT[complexity] || COMPLEXITY_TEXT.normal}${personal}${searchBlock}${languageBlock}`;
 }
 
 export async function POST(req: Request) {

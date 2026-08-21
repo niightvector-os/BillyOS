@@ -15,15 +15,19 @@ function extractJson(text: string) {
   return JSON.parse(cleaned.slice(start, end + 1));
 }
 
-function buildRouterSystem() {
+function buildRouterSystem(preferredLanguage?: string) {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const languageRule = preferredLanguage && preferredLanguage !== "en"
+    ? `Write the "summary" field in the language with ISO code "${preferredLanguage}". Keep all other JSON keys/values (block types, reasons) in English exactly as specified.`
+    : "";
   return `You are BillyOS's Visual Intelligence router. Today's real date is ${today}.
 FIRST, decide needs_live_research (true for current events/prices/deadlines/officeholders/sports/schedules; false for stable knowledge; prefer true when unsure).
 SECOND, choose visual blocks: bar_chart, line_chart, pie_chart, timeline, comparison_cards, table, map, video, images, text_only. Most questions need 0-2. text_only is valid.
+${languageRule}
 Respond ONLY JSON: {"summary": "...", "needs_live_research": boolean, "research_query": "...", "blocks": [{"type": "...", "reason": "..."}]}`;
 }
 
-function buildGenerationSystem(blockTypes: string[], sources: { title: string; content: string }[] | null) {
+function buildGenerationSystem(blockTypes: string[], sources: { title: string; content: string }[] | null, preferredLanguage?: string) {
   const sourceBlock = sources && sources.length > 0
     ? `\n\nGROUND DATA IN THESE SOURCES:\n${sources.map((s, i) => `[${i + 1}] ${s.title}\n${s.content.slice(0, 500)}`).join("\n\n")}`
     : "\n\nUse only stable, well-established knowledge. Never invent numbers.";
@@ -36,7 +40,10 @@ function buildGenerationSystem(blockTypes: string[], sources: { title: string; c
     table: `"table": {"columns":["..."],"rows":[["...","..."]]}`,
   };
   const wanted = blockTypes.filter((t) => shapes[t]).map((t) => shapes[t]);
-  return `Generate real, accurate data for: ${wanted.join(", ")}. Respond ONLY JSON: {"generated": {${wanted.join(", ")}}}${sourceBlock}\nNever use LaTeX. UK English.`;
+  const languageRule = preferredLanguage && preferredLanguage !== "en"
+    ? ` Write all title/label/description/text VALUES in the language with ISO code "${preferredLanguage}", but keep the JSON key names shown above exactly as given (do not translate keys like "title", "data", "label", "value").`
+    : " UK English.";
+  return `Generate real, accurate data for: ${wanted.join(", ")}. Respond ONLY JSON: {"generated": {${wanted.join(", ")}}}${sourceBlock}\nNever use LaTeX.${languageRule}`;
 }
 
 export async function POST(req: Request) {
@@ -44,10 +51,10 @@ export async function POST(req: Request) {
   if (usage.blocked) return usageBlockedResponse();
 
   const timer = new Timer();
-  const { question } = await req.json();
+  const { question, preferred_language } = await req.json();
 
   let routed: RouterResponse | null = null;
-  const routerRaw = await createChatCompletion(buildRouterSystem(), question, 0.2);
+  const routerRaw = await createChatCompletion(buildRouterSystem(preferred_language), question, 0.2);
   if (routerRaw !== null) {
     try {
       const parsed = RouterResponseSchema.safeParse(extractJson(routerRaw));
@@ -85,7 +92,7 @@ export async function POST(req: Request) {
   if (generativeTypes.length > 0) {
     let generated: Record<string, unknown> | null = null;
     const genRaw = await createChatCompletion(
-      buildGenerationSystem(generativeTypes, routed.needs_live_research ? sourcesForGeneration : null),
+      buildGenerationSystem(generativeTypes, routed.needs_live_research ? sourcesForGeneration : null, preferred_language),
       question,
       0.3
     );
