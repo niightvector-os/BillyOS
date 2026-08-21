@@ -58,9 +58,14 @@ export async function checkAndIncrementUsage(authHeader: string | null) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("credits_remaining, credits_reset_at")
+    .select("credits_remaining, credits_reset_at, is_unlimited")
     .eq("id", userId)
     .maybeSingle();
+
+  // Unlimited accounts (e.g. the app owner) skip credit tracking entirely.
+  if (profile?.is_unlimited) {
+    return { blocked: false, count: 0 };
+  }
 
   let creditsRemaining = profile?.credits_remaining ?? DAILY_CREDIT_LIMIT;
   let creditsResetAt = profile?.credits_reset_at ?? null;
