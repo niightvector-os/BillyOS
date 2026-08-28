@@ -7,6 +7,14 @@ import { useConfirm } from "@/lib/confirm-context";
 
 type Message = { role: "user" | "assistant"; content: string };
 
+const GhostIcon = ({ size = 16, className }: { size?: number; className?: string }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className}>
+    <path d="M12 2C7.58 2 4 5.58 4 10v10l3-2 2.5 2 2.5-2 2.5 2 2.5-2 3 2V10c0-4.42-3.58-8-8-8Z" />
+    <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
+  </svg>
+);
+
 export default function GhostMode({ onExit }: { onExit: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -68,6 +76,8 @@ export default function GhostMode({ onExit }: { onExit: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading) return;
+
+    setNoticeVisible(false); // auto-dismiss the notice the moment someone asks something
 
     const userMsg: Message = { role: "user", content: input };
     const next = [...messages, userMsg];
@@ -134,23 +144,16 @@ export default function GhostMode({ onExit }: { onExit: () => void }) {
   return (
     <div className="ghost-stage ghost-enter">
       <div className="ghost-header">
-        <div className="ghost-header-label">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path d="M12 2C7.58 2 4 5.58 4 10v10l3-2 2.5 2 2.5-2 2.5 2 2.5-2 3 2V10c0-4.42-3.58-8-8-8Z" />
-            <circle cx="9" cy="10" r="1" fill="currentColor" stroke="none" />
-            <circle cx="15" cy="10" r="1" fill="currentColor" stroke="none" />
-          </svg>
-          Ghost Mode
+        <div className="ghost-header-label" data-tooltip="Ghost Mode — temporary, nothing is saved">
+          <GhostIcon />
         </div>
         <button className="ghost-exit" onClick={requestExit}>Exit</button>
       </div>
 
       {noticeVisible && (
         <div className="ghost-notice">
-          <div className="ghost-notice-title">Ghost Mode</div>
           <p className="ghost-notice-text">
-            This is a temporary conversation. Chats started in Ghost Mode are not saved to your chat history
-            and won&apos;t appear alongside your regular conversations. Once you leave this session, it is permanently discarded.
+            Temporary chat — nothing here is saved once you leave.
           </p>
           <button className="ghost-notice-dismiss" onClick={() => setNoticeVisible(false)}>Dismiss</button>
         </div>
@@ -158,7 +161,7 @@ export default function GhostMode({ onExit }: { onExit: () => void }) {
 
       {idle ? (
         <div className="ghost-idle">
-          <div className="ghost-orb" />
+          <GhostIcon size={48} className="ghost-orb" />
           <h1 className="ghost-title">Ghost Mode</h1>
           <p className="ghost-subtitle">Nothing said here is remembered.</p>
           {searchForm}

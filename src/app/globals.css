@@ -1507,11 +1507,9 @@ h1.title {
   gap: 14px;
 }
 .ghost-orb {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-dim);
-  box-shadow: 0 0 14px 3px #ffffff22;
+  color: var(--text-dim);
+  filter: drop-shadow(0 0 14px #ffffff22);
+  margin-bottom: 4px;
 }
 .ghost-title {
   font-family: var(--font-display), sans-serif;
@@ -1583,8 +1581,8 @@ h1.title {
   border-color: var(--accent-dim);
 }
 .ghost-orb {
-  background: var(--ember);
-  box-shadow: 0 0 14px 3px #8FA8C433;
+  color: var(--ember);
+  filter: drop-shadow(0 0 14px #8FA8C433);
 }
 
 /* ===== CONFIRM BAR (replaces native browser confirm/alert) ===== */
@@ -2342,4 +2340,11 @@ h1.title {
   color: #A69BFF;
   font-size: 13px;
   text-decoration: underline;
+}
+
+.account-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }

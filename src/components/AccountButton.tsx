@@ -35,12 +35,17 @@ export default function AccountButton() {
     );
   }
 
+  const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture;
   const initial = user.email?.[0]?.toUpperCase() ?? "?";
 
   return (
     <div className="account-wrap">
       <button className="account-handle account-filled" onClick={() => setMenuOpen((o) => !o)}>
-        {initial}
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="account-avatar-img" referrerPolicy="no-referrer" />
+        ) : (
+          initial
+        )}
       </button>
       {menuOpen && (
         <div className="account-menu">
