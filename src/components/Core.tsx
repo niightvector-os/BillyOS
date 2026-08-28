@@ -128,7 +128,7 @@ export default function Core() {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      setInput("");
+      setInput(""); resetTextareaHeight();
       recognitionRef.current.start();
       setIsListening(true);
       inputRef.current?.focus();
@@ -203,7 +203,7 @@ export default function Core() {
 
   function detectModeFromText(text: string): string | null {
     const t = text.toLowerCase();
-    const researchPatterns = [/\btoday\b/, /\blatest\b/, /\bcurrent(ly)?\b/, /\bright now\b/, /\bthis (year|month|week)\b/, /\b202[4-9]\b/, /\brecent(ly)?\b/, /\bnews\b/, /\bwho won\b/, /\bthe score\b/, /\bhappening\b/, /\bupdate on\b/];
+    const researchPatterns = [/\btoday\b/, /\blatest\b/, /\bcurrent(ly)?\b/, /\bright now\b/, /\bthis (year|month|week)\b/, /\b(in |for |of |since |from )202[4-9]\b/, /\brecent(ly)?\b/, /\bnews\b/, /\bwho won\b/, /\bthe score\b/, /\bhappening\b/, /\bupdate on\b/];
     if (researchPatterns.some((p) => p.test(t))) return "research";
 
     const visualizePatterns = [/\bchart\b/, /\bgraph\b/, /\bcompare\b/, /\bcomparison\b/, /\bvisuali[sz]e\b/, /\bplan (me )?(a |my )?trip\b/, /\btimeline\b/, /\btable of\b/, /\bpie chart\b/, /\bbar chart\b/, /\bdraw (a|me)\b/, /\bdiagram\b/, /\bpictures? of\b/, /\bimages? of\b/, /\bshow me a\b/];
@@ -218,13 +218,20 @@ export default function Core() {
     return null;
   }
 
+  function resetTextareaHeight() {
+    if (inputRef.current) inputRef.current.style.height = "auto";
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!input.trim() || loading || busy) return;
     if (isListening) { recognitionRef.current?.stop(); setIsListening(false); }
     let detectedMode = activeMode || detectModeFromText(input);
 
-    if (!detectedMode) {
+    // Skip the AI classifier for short messages — short follow-ups/replies are
+    // almost never mode-switches, and this avoids adding a full extra AI call's
+    // worth of latency to the common case of plain conversational chat.
+    if (!detectedMode && input.trim().split(/\s+/).length >= 5) {
       setProcessingMode("thinking");
       try {
         const res = await fetch("/api/classify-mode", {
@@ -242,7 +249,7 @@ export default function Core() {
 
     if (activeMode === "study") {
       const topic = input;
-      setInput(""); setActiveMode(null); setStudyLoading(true); setProcessingMode("study");
+      setInput(""); resetTextareaHeight(); setActiveMode(null); setStudyLoading(true); setProcessingMode("study");
       try {
         const res = await fetch("/api/study", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -259,7 +266,7 @@ export default function Core() {
 
     if (detectedMode === "map") {
       const topic = input;
-      setInput(""); setActiveMode(null); setMapLoading(true); setProcessingMode("map");
+      setInput(""); resetTextareaHeight(); setActiveMode(null); setMapLoading(true); setProcessingMode("map");
       try {
         const res = await fetch("/api/map", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -276,7 +283,7 @@ export default function Core() {
 
     if (detectedMode === "video") {
       const topic = input;
-      setInput(""); setActiveMode(null); setVideoLoading(true); setProcessingMode("video");
+      setInput(""); resetTextareaHeight(); setActiveMode(null); setVideoLoading(true); setProcessingMode("video");
       try {
         const res = await fetch("/api/video", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -293,7 +300,7 @@ export default function Core() {
 
     if (detectedMode === "visualize") {
       const question = input;
-      setInput(""); setActiveMode(null); setVisualizeLoading(true); setProcessingMode("visualize");
+      setInput(""); resetTextareaHeight(); setActiveMode(null); setVisualizeLoading(true); setProcessingMode("visualize");
       try {
         const res = await fetch("/api/visualize", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
@@ -310,7 +317,7 @@ export default function Core() {
 
     if (detectedMode === "research") {
       const query = input;
-      setInput(""); setActiveMode(null); setProcessingMode("research");
+      setInput(""); resetTextareaHeight(); setActiveMode(null); setProcessingMode("research");
       stickToBottom.current = true;
       await sendResearchMessage(query);
       setProcessingMode(null);
@@ -318,7 +325,7 @@ export default function Core() {
     }
 
     const displayText = input;
-    setInput(""); setActiveMode(null); stickToBottom.current = true;
+    setInput(""); resetTextareaHeight(); setActiveMode(null); stickToBottom.current = true;
     await sendMessage(displayText);
   }
 

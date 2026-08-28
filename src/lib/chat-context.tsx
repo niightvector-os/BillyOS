@@ -119,6 +119,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }, [refreshConversations, refreshProjects, refreshProfile]);
 
   function startNewChat(projectId?: string) {
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    setLoading(false);
     setConversationId(null);
     setMessages([]);
     pendingProjectId.current = projectId;
@@ -422,13 +425,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       });
     }
 
+    // Give Research the last exchange as context, so follow-ups like
+    // "his viral songs in 2026" resolve pronouns correctly instead of
+    // being searched as a standalone, ambiguous query.
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    const contextualQuery =
+      lastUser && lastAssistant
+        ? `Previous question: "${lastUser.content}"\nPrevious answer summary: "${lastAssistant.content.slice(0, 300)}"\n\nFollow-up question: ${query}`
+        : query;
+
     let assistantMsg: Message = { role: "assistant", content: "" };
 
     try {
       const res = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, preferred_language: profile.preferred_language }),
+        body: JSON.stringify({ query: contextualQuery, preferred_language: profile.preferred_language }),
       });
       const data = await res.json();
 
