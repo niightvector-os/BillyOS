@@ -1554,10 +1554,15 @@ h1.title {
 .core-wordmark {
   font-family: var(--font-display), sans-serif;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 20px;
   letter-spacing: 0.14em;
-  color: var(--text-dim);
   text-transform: uppercase;
+  background: linear-gradient(90deg, #7C6CFF, #4FD1C5, #F5A623, #7C6CFF);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: wordmark-shimmer 6s linear infinite, wordmark-in 0.8s ease-out;
   opacity: 0.6;
 }
 
@@ -2383,4 +2388,15 @@ h1.title {
 @keyframes thinking-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+
+@keyframes wordmark-shimmer {
+  0% { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+
+@keyframes wordmark-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); filter: drop-shadow(0 0 12px #7C6CFF66); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: drop-shadow(0 0 0 transparent); }
 }
