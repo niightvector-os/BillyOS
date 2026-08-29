@@ -14,11 +14,11 @@ import { useToast } from "@/lib/toast-context";
 import { getErrorMessage } from "@/lib/errors";
 
 const MODES = [
-  { key: "research", sym: "✦", label: "Deep Research", prefix: "" },
-  { key: "visualize", sym: "◇", label: "Visualize", prefix: "" },
-  { key: "map", sym: "⌖", label: "Find on Map", prefix: "" },
-  { key: "video", sym: "▶", label: "Explain with Video", prefix: "" },
-  { key: "study", sym: "▣", label: "Study Mode", prefix: "" },
+  { key: "research", sym: "✦", label: "Deep Research", prefix: "", color: "#7C6CFF" },
+  { key: "visualize", sym: "◇", label: "Visualize", prefix: "", color: "#4FD1C5" },
+  { key: "map", sym: "⌖", label: "Find on Map", prefix: "", color: "#F5A623" },
+  { key: "video", sym: "▶", label: "Explain with Video", prefix: "", color: "#FF6B6B" },
+  { key: "study", sym: "▣", label: "Study Mode", prefix: "", color: "#5B9DFF" },
 ];
 
 const THINKING_WORDS = ["Thinking", "Mulling it over", "Piecing it together", "Working on it", "Gathering thoughts", "Almost there"];
@@ -563,9 +563,10 @@ export default function Core() {
     <div
       key={m.key}
       className={`mode-pill ${activeMode === m.key || processingMode === m.key ? "mode-active" : ""}`}
+      style={{ "--mode-color": m.color } as React.CSSProperties}
       onClick={() => setActiveMode(activeMode === m.key ? null : m.key)}
     >
-      <span className="sym">{m.sym}</span> {m.label}
+      <span className="sym" style={{ color: m.color }}>{m.sym}</span> {m.label}
     </div>
   ))}
 

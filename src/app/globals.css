@@ -309,8 +309,14 @@ h1.title {
 }
 .mode-pill:hover {
   color: var(--text);
-  border-color: var(--accent-dim);
-  background: #7c6cff0d;
+  border-color: var(--mode-color, var(--accent-dim));
+  background: color-mix(in srgb, var(--mode-color, #7C6CFF) 8%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--mode-color, #7C6CFF) 55%, transparent);
+}
+
+.mode-pill {
+  transition: all 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* ===== CONVERSATION ===== */
@@ -841,8 +847,9 @@ h1.title {
 .stop-btn { color: var(--ember) !important; }
 .mode-active {
   color: var(--text) !important;
-  border-color: var(--accent-dim) !important;
-  background: #7C6CFF1a !important;
+  border-color: var(--mode-color, var(--accent-dim)) !important;
+  background: color-mix(in srgb, var(--mode-color, #7C6CFF) 12%, transparent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mode-color, #7C6CFF) 30%, transparent), 0 4px 16px -6px color-mix(in srgb, var(--mode-color, #7C6CFF) 50%, transparent);
 }
 
 /* ===== SCROLL FIXES ===== */
