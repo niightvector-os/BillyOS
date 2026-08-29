@@ -22,6 +22,14 @@ const MODES = [
 ];
 
 const THINKING_WORDS = ["Thinking", "Mulling it over", "Piecing it together", "Working on it", "Gathering thoughts", "Almost there"];
+
+const EXAMPLE_PROMPTS = [
+  "What's the latest news on AI today?",
+  "Compare the iPhone 17 vs Samsung S25",
+  "Plan me a 3-day trip to Kigali",
+  "Show me the distance from Kigali to Kampala",
+  "Explain black holes simply",
+];
 function pickGreeting(name?: string | null) {
   const named = [
     `What are we doing today, ${name}?`,
@@ -408,6 +416,21 @@ export default function Core() {
           <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="core-center" />
           <div className="core-wordmark">BillyOS</div>
           <h1 className="title">{greeting}</h1>
+          <div className="example-chips">
+            {EXAMPLE_PROMPTS.map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                className="example-chip"
+                onClick={() => {
+                  setInput(p);
+                  inputRef.current?.focus();
+                }}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
