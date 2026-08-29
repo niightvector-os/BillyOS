@@ -423,7 +423,10 @@ export default function Core() {
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                       </div>
                     ) : loading && i === messages.length - 1 ? (
-                      <span className="thinking-text">{isSearching ? "Searching the web..." : thinkingWord + "..."}</span>
+                      <div className="thinking-row">
+                        <span className="thinking-logo-spin"><img src="/favicons/logo-mark-64.png" alt="" className="thinking-logo" /></span>
+                        <span className="thinking-text">{isSearching ? "Searching the web..." : thinkingWord + "..."}</span>
+                      </div>
                     ) : null
                   ) : (
                     m.content
