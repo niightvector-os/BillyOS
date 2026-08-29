@@ -377,7 +377,7 @@ export default function Core() {
   const idle = messages.length === 0;
 
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
-  if (mapData) return <MapView topic={mapData.topic} locations={mapData.locations} isRoute={mapData.isRoute} routes={mapData.routes} onClose={() => setMapData(null)} />;
+  if (mapData) return <MapView topic={mapData.topic} locations={mapData.locations} isRoute={mapData.isRoute} routes={mapData.routes} explanation={mapData.explanation} images={mapData.images} onClose={() => setMapData(null)} />;
   if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} />;
   if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} />;
 

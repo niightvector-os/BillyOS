@@ -6,7 +6,15 @@ import type { Map as LeafletMap } from "leaflet";
 
 type Location = { name: string; description: string; lat: number; lng: number };
 type RouteLeg = { distanceKm: number; durationMin: number };
-export type MapData = { topic: string; locations: Location[]; isRoute?: boolean; routes?: Routes };
+type ImageResult = { title: string; url: string; pageUrl: string };
+export type MapData = {
+  topic: string;
+  locations: Location[];
+  isRoute?: boolean;
+  routes?: Routes;
+  explanation?: string | null;
+  images?: ImageResult[];
+};
 type Routes = { driving: RouteLeg | null; walking: RouteLeg | null; cycling: RouteLeg | null; geometry: [number, number][] };
 
 function formatDuration(min: number) {
@@ -21,12 +29,16 @@ export default function MapView({
   locations,
   isRoute,
   routes,
+  explanation,
+  images,
   onClose,
 }: {
   topic: string;
   locations: Location[];
   isRoute?: boolean;
   routes?: Routes;
+  explanation?: string | null;
+  images?: ImageResult[];
   onClose: () => void;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -156,6 +168,24 @@ export default function MapView({
                 <span className="map-list-name">{loc.name}</span>
                 <span className="map-list-desc">{loc.description}</span>
               </div>
+            ))}
+          </div>
+        )}
+
+        {images && images.length > 0 && (
+          <div className="map-image-strip">
+            {images.map((img, i) => (
+              <a key={i} href={img.pageUrl} target="_blank" rel="noopener noreferrer" className="map-image-item">
+                <img src={img.url} alt={img.title} loading="lazy" />
+              </a>
+            ))}
+          </div>
+        )}
+
+        {explanation && (
+          <div className="map-explanation md-content" style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 32px" }}>
+            {explanation.split("\n\n").map((para, i) => (
+              <p key={i}>{para}</p>
             ))}
           </div>
         )}

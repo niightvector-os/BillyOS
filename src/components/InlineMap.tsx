@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Map as LeafletMap } from "leaflet";
 
@@ -9,6 +9,7 @@ export type Location = { name: string; description: string; lat: number; lng: nu
 export default function InlineMap({ locations }: { locations: Location[] }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<LeafletMap | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,8 +32,8 @@ export default function InlineMap({ locations }: { locations: Location[] }) {
       );
       mapInstance.current = map;
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-        attribution: "© OpenStreetMap © CARTO",
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
         maxZoom: 19,
       }).addTo(map);
 
@@ -56,5 +57,34 @@ export default function InlineMap({ locations }: { locations: Location[] }) {
     };
   }, [locations]);
 
-  return <div className="inline-map" ref={mapRef} />;
+  // Leaflet needs an explicit size recalculation after the container's
+  // dimensions change (entering/exiting fullscreen), or the map renders
+  // stretched/blank until the next manual pan or zoom.
+  useEffect(() => {
+    if (mapInstance.current) {
+      setTimeout(() => mapInstance.current?.invalidateSize(), 50);
+    }
+  }, [fullscreen]);
+
+  return (
+    <div className={fullscreen ? "inline-map-fullscreen-overlay" : "inline-map-wrap"}>
+      <button
+        className="inline-map-fullscreen-btn"
+        onClick={() => setFullscreen((f) => !f)}
+        aria-label={fullscreen ? "Exit fullscreen" : "View fullscreen"}
+        data-tooltip={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+      >
+        {fullscreen ? (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M9 4v4a1 1 0 0 1-1 1H4M15 4v4a1 1 0 0 0 1 1h4M9 20v-4a1 1 0 0 0-1-1H4M15 20v-4a1 1 0 0 1 1-1h4" />
+          </svg>
+        ) : (
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4" />
+          </svg>
+        )}
+      </button>
+      <div className="inline-map" ref={mapRef} />
+    </div>
+  );
 }
