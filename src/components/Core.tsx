@@ -152,7 +152,7 @@ export default function Core() {
     if (pendingLoad.mode === "study") setStudyData(payload as unknown as StudySet);
     else if (pendingLoad.mode === "map") setMapData({ topic: pendingLoad.title, locations: payload.locations as MapData["locations"] });
     else if (pendingLoad.mode === "video") setVideoData({ topic: pendingLoad.title, videos: payload.videos as VideoData["videos"] });
-    else if (pendingLoad.mode === "visualize") setVisualizeData({ question: pendingLoad.title, ...payload } as unknown as VisualizeData);
+    else if (pendingLoad.mode === "visualize") setVisualizeData({ entries: [{ question: pendingLoad.title, ...payload }] } as unknown as VisualizeData);
   }
 
   useEffect(() => {
@@ -333,12 +333,13 @@ export default function Core() {
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        setVisualizeData({ question, ...data });
+        setVisualizeData({ entries: [{ question, ...data }] });
         saveModeResult("visualize", question, data);
       } catch (err) { toast(getErrorMessage(err) || "Could not analyze that right now — please try again."); }
       setVisualizeLoading(false); setProcessingMode(null);
       return;
     }
+
 
     if (detectedMode === "research") {
       const query = input;
@@ -352,6 +353,24 @@ export default function Core() {
     const displayText = input;
     setInput(""); resetTextareaHeight(); setActiveMode(null); stickToBottom.current = true;
     await sendMessage(displayText);
+  }
+
+  async function handleVisualizeFollowUp(question: string) {
+    if (!visualizeData) return;
+    const priorEntries = visualizeData.entries;
+    const lastEntry = priorEntries[priorEntries.length - 1];
+    const context = `Previous question: "${lastEntry.question}"\nPrevious answer summary: "${lastEntry.summary}"`;
+    setVisualizeLoading(true);
+    try {
+      const res = await fetch("/api/visualize", {
+        method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ question, preferred_language: profile.preferred_language, context }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setVisualizeData({ entries: [...priorEntries, { question, ...data }] });
+    } catch (err) { toast(getErrorMessage(err) || "Could not analyze that right now — please try again."); }
+    setVisualizeLoading(false);
   }
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -404,7 +423,7 @@ export default function Core() {
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
   if (mapData) return <MapView topic={mapData.topic} locations={mapData.locations} isRoute={mapData.isRoute} routes={mapData.routes} explanation={mapData.explanation} images={mapData.images} onClose={() => setMapData(null)} />;
   if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} />;
-  if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} />;
+  if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} onFollowUp={handleVisualizeFollowUp} loading={visualizeLoading} />;
 
   return (
     <>

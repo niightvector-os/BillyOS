@@ -51,10 +51,11 @@ export async function POST(req: Request) {
   if (usage.blocked) return usageBlockedResponse();
 
   const timer = new Timer();
-  const { question, preferred_language } = await req.json();
+  const { question, preferred_language, context } = await req.json();
+  const effectiveQuestion = context ? `${context}\n\nFollow-up question: ${question}` : question;
 
   let routed: RouterResponse | null = null;
-  const routerRaw = await createChatCompletion(buildRouterSystem(preferred_language), question, 0.2);
+  const routerRaw = await createChatCompletion(buildRouterSystem(preferred_language), effectiveQuestion, 0.2);
   if (routerRaw !== null) {
     try {
       const parsed = RouterResponseSchema.safeParse(extractJson(routerRaw));
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
     let generated: Record<string, unknown> | null = null;
     const genRaw = await createChatCompletion(
       buildGenerationSystem(generativeTypes, routed.needs_live_research ? sourcesForGeneration : null, preferred_language),
-      question,
+      effectiveQuestion,
       0.3
     );
     if (genRaw !== null) {

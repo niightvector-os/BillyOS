@@ -2475,3 +2475,34 @@ h1.title {
 .map-explanation p {
   margin-bottom: 12px;
 }
+
+.visualize-entry {
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.visualize-entry:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.visualize-entry-question {
+  font-family: var(--font-display), sans-serif;
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.visualize-followup-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 780px;
+  margin: 20px auto 0;
+  padding: 0 24px 24px;
+}
+
+.visualize-followup-form .auth-input {
+  flex: 1;
+}
