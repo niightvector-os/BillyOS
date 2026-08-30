@@ -17,7 +17,7 @@ const MODES = [
   { key: "research", sym: "✦", label: "Deep Research", prefix: "", color: "#7C6CFF" },
   { key: "visualize", sym: "◇", label: "Visualize", prefix: "", color: "#4FD1C5" },
   { key: "map", sym: "⌖", label: "Find on Map", prefix: "", color: "#F5A623" },
-  { key: "video", sym: "▶", label: "Explain with Video", prefix: "", color: "#FF6B6B" },
+  { key: "video", sym: "▶", label: "YouTube", prefix: "", color: "#FF3B3B" },
   { key: "study", sym: "▣", label: "Study Mode", prefix: "", color: "#5B9DFF" },
 ];
 
@@ -218,6 +218,19 @@ export default function Core() {
     return () => window.removeEventListener("keydown", handleGlobalKey);
   }, [studyData, mapData, videoData, visualizeData, isListening]);
 
+  useEffect(() => {
+    function handleNewChatShortcut(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "o") {
+        setStudyData(null);
+        setMapData(null);
+        setVideoData(null);
+        setVisualizeData(null);
+      }
+    }
+    window.addEventListener("keydown", handleNewChatShortcut);
+    return () => window.removeEventListener("keydown", handleNewChatShortcut);
+  }, []);
+
 
   async function authHeaders(): Promise<Record<string, string>> {
     const supabase = createClient();
@@ -391,6 +404,20 @@ export default function Core() {
     setMapLoading(false);
   }
 
+  async function handleVideoSearch(topic: string) {
+    setVideoLoading(true);
+    try {
+      const res = await fetch("/api/video", {
+        method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ topic, preferred_language: profile.preferred_language }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setVideoData(data);
+    } catch (err) { toast(getErrorMessage(err) || "Couldn't find a video for that — please try again."); }
+    setVideoLoading(false);
+  }
+
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -440,7 +467,7 @@ export default function Core() {
 
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
   if (mapData) return <MapView data={mapData} onClose={() => setMapData(null)} onFollowUp={handleMapFollowUp} loading={mapLoading} />;
-  if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} />;
+  if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} onSearch={handleVideoSearch} loading={videoLoading} />;
   if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} onFollowUp={handleVisualizeFollowUp} loading={visualizeLoading} />;
 
   return (
