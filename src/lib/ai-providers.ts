@@ -1,25 +1,37 @@
 import OpenAI from "openai";
 
 // Each provider tried in order. If every model in a provider fails
-// for ANY reason (rate-limited, auth issue, transient error, etc.), we
-// move to the next provider automatically. Once a provider's daily quota
+// for ANY reason (rate-limited, auth issue, transient error, timeout, etc.),
+// we move to the next provider automatically. Once a provider's daily quota
 // resets, it's simply tried first again on the next request — no manual
 // switching needed. We never give up early on a single provider's failure —
 // only after every provider AND every model has been tried.
+//
+// CRITICAL: every call has a hard timeout (REQUEST_TIMEOUT_MS) and
+// maxRetries: 0. Without this, a slow/hanging provider can stall the
+// whole chain for minutes before we ever try the next one.
+
+const REQUEST_TIMEOUT_MS = 20_000; // 20 seconds — fail fast, try the next provider
 
 const openrouter = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
   baseURL: "https://openrouter.ai/api/v1",
+  timeout: REQUEST_TIMEOUT_MS,
+  maxRetries: 0,
 });
 
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
+  timeout: REQUEST_TIMEOUT_MS,
+  maxRetries: 0,
 });
 
 const gemini = new OpenAI({
   apiKey: process.env.GEMINI_API_KEY,
   baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+  timeout: REQUEST_TIMEOUT_MS,
+  maxRetries: 0,
 });
 
 export const PROVIDER_CHAIN = [
@@ -46,6 +58,7 @@ export async function createChatStream(
 
   for (const provider of PROVIDER_CHAIN) {
     for (const model of provider.models) {
+      const start = Date.now();
       try {
         const completion = await provider.client.chat.completions.create({
           model,
@@ -67,8 +80,8 @@ export async function createChatStream(
 
         return new Response(stream, { headers: extraHeaders });
       } catch (err) {
-        console.error(`[ai-providers] ${provider.name}/${model} failed — ${describeError(err)}`);
-        continue; // ALWAYS try the next model/provider, regardless of error type
+        console.error(`[ai-providers] ${provider.name}/${model} failed after ${Date.now() - start}ms — ${describeError(err)}`);
+        continue;
       }
     }
   }
@@ -92,6 +105,7 @@ export async function createChatCompletion(
 ): Promise<string | null> {
   for (const provider of PROVIDER_CHAIN) {
     for (const model of provider.models) {
+      const start = Date.now();
       try {
         const completion = await provider.client.chat.completions.create({
           model,
@@ -103,8 +117,8 @@ export async function createChatCompletion(
         });
         return completion.choices[0]?.message?.content || "";
       } catch (err) {
-        console.error(`[ai-providers] ${provider.name}/${model} failed — ${describeError(err)}`);
-        continue; // ALWAYS try the next model/provider, regardless of error type
+        console.error(`[ai-providers] ${provider.name}/${model} failed after ${Date.now() - start}ms — ${describeError(err)}`);
+        continue;
       }
     }
   }
