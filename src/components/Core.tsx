@@ -53,7 +53,9 @@ function pickGreeting(name?: string | null) {
 
 export default function Core() {
   const toast = useToast();
-  const { messages, loading, isSearching, usageWarning, signupPromptOpen, closeSignupPrompt, sendMessage, sendResearchMessage, stopGeneration, saveModeResult, pendingLoad, clearPendingLoad, profile, truncateForEdit } = useChat();
+  const { messages, loading, isSearching, usageWarning, signupPromptOpen, closeSignupPrompt, sendMessage, sendResearchMessage, stopGeneration, saveModeResult, pendingLoad, clearPendingLoad, profile, truncateForEdit, conversations } = useChat();
+  const [rotatingPlaceholder, setRotatingPlaceholder] = useState<string | null>(null);
+  const isFirstTimeUser = conversations.length === 0;
   const [input, setInput] = useState("");
   const [attachedFile, setAttachedFile] = useState<{ filename: string; extractedText: string } | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -180,6 +182,21 @@ export default function Core() {
     }, 1500);
     return () => clearInterval(id);
   }, [loading]);
+  // Rotating example suggestions inside the search bar's own placeholder text —
+  // only for first-time users with no chat history yet, and only while the
+  // box is actually empty (stops the moment they start typing).
+  useEffect(() => {
+    if (!isFirstTimeUser || input.length > 0) {
+      setRotatingPlaceholder(null);
+      return;
+    }
+    let i = 0;
+    const id = setInterval(() => {
+      setRotatingPlaceholder(EXAMPLE_PROMPTS[i % EXAMPLE_PROMPTS.length]);
+      i++;
+    }, 5000);
+    return () => clearInterval(id);
+  }, [isFirstTimeUser, input]);
 
   useEffect(() => {
     function handleGlobalKey(e: KeyboardEvent) {
@@ -416,21 +433,6 @@ export default function Core() {
           <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="core-center" />
           <div className="core-wordmark">BillyOS</div>
           <h1 className="title">{greeting}</h1>
-          <div className="example-chips">
-            {EXAMPLE_PROMPTS.map((p, i) => (
-              <button
-                key={i}
-                type="button"
-                className="example-chip"
-                onClick={() => {
-                  setInput(p);
-                  inputRef.current?.focus();
-                }}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
@@ -538,6 +540,7 @@ export default function Core() {
               videoLoading ? "Finding a video..." :
               visualizeLoading ? "Analyzing..." :
               activeMode ? `${MODES.find((m) => m.key === activeMode)?.label} — ask anything...` :
+              rotatingPlaceholder ? rotatingPlaceholder :
               "Ask BillyOS anything..."
             }
             value={input}
