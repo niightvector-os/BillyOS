@@ -150,7 +150,7 @@ export default function Core() {
     lastPendingLoadRef.current = pendingLoad;
     const payload = pendingLoad.data as Record<string, unknown>;
     if (pendingLoad.mode === "study") setStudyData(payload as unknown as StudySet);
-    else if (pendingLoad.mode === "map") setMapData({ topic: pendingLoad.title, locations: payload.locations as MapData["locations"] });
+    else if (pendingLoad.mode === "map") setMapData({ entries: [{ topic: pendingLoad.title, locations: payload.locations as MapData["entries"][0]["locations"] }] });
     else if (pendingLoad.mode === "video") setVideoData({ topic: pendingLoad.title, videos: payload.videos as VideoData["videos"] });
     else if (pendingLoad.mode === "visualize") setVisualizeData({ entries: [{ question: pendingLoad.title, ...payload }] } as unknown as VisualizeData);
   }
@@ -295,11 +295,11 @@ export default function Core() {
       try {
         const res = await fetch("/api/map", {
           method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-          body: JSON.stringify({ topic }),
+          body: JSON.stringify({ topic, preferred_language: profile.preferred_language }),
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        setMapData(data);
+        setMapData({ entries: [{ topic, ...data }] });
         saveModeResult("map", data.topic || topic, { locations: data.locations });
       } catch (err) { toast(getErrorMessage(err) || "Couldn't find that location — please try again."); }
       setMapLoading(false); setProcessingMode(null);
@@ -373,6 +373,24 @@ export default function Core() {
     setVisualizeLoading(false);
   }
 
+  async function handleMapFollowUp(topic: string) {
+    if (!mapData) return;
+    const priorEntries = mapData.entries;
+    const lastEntry = priorEntries[priorEntries.length - 1];
+    const context = `Previous question: "${lastEntry.topic}"`;
+    setMapLoading(true);
+    try {
+      const res = await fetch("/api/map", {
+        method: "POST", headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ topic, preferred_language: profile.preferred_language, context }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setMapData({ entries: [...priorEntries, { topic, ...data }] });
+    } catch (err) { toast(getErrorMessage(err) || "Couldn't find that location — please try again."); }
+    setMapLoading(false);
+  }
+
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -421,7 +439,7 @@ export default function Core() {
   const idle = messages.length === 0;
 
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
-  if (mapData) return <MapView topic={mapData.topic} locations={mapData.locations} isRoute={mapData.isRoute} routes={mapData.routes} explanation={mapData.explanation} images={mapData.images} onClose={() => setMapData(null)} />;
+  if (mapData) return <MapView data={mapData} onClose={() => setMapData(null)} onFollowUp={handleMapFollowUp} loading={mapLoading} />;
   if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} />;
   if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} onFollowUp={handleVisualizeFollowUp} loading={visualizeLoading} />;
 
