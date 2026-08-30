@@ -1,9 +1,11 @@
 import OpenAI from "openai";
 
 // Each provider tried in order. If every model in a provider fails
-// (rate-limited/exhausted), we move to the next provider automatically.
-// Once a provider's daily quota resets, it's simply tried first again
-// on the next request — no manual switching needed.
+// for ANY reason (rate-limited, auth issue, transient error, etc.), we
+// move to the next provider automatically. Once a provider's daily quota
+// resets, it's simply tried first again on the next request — no manual
+// switching needed. We never give up early on a single provider's failure —
+// only after every provider AND every model has been tried.
 
 const openrouter = new OpenAI({
   apiKey: process.env.OPENROUTER_API_KEY,
@@ -21,17 +23,18 @@ const gemini = new OpenAI({
 });
 
 export const PROVIDER_CHAIN = [
-  { client: openrouter, models: [
+  { name: "openrouter", client: openrouter, models: [
       "google/gemma-4-31b-it:free",
       "nvidia/nemotron-3-super-120b-a12b:free",
       "openai/gpt-oss-20b:free",
     ] },
-  { client: groq, models: ["llama-3.3-70b-versatile"] },
-  { client: gemini, models: ["gemini-2.5-flash"] },
+  { name: "groq", client: groq, models: ["llama-3.3-70b-versatile"] },
+  { name: "gemini", client: gemini, models: ["gemini-2.5-flash"] },
 ];
 
-function isRetryableStatus(status: number | undefined) {
-  return status === 429 || status === 503;
+function describeError(err: unknown) {
+  const e = err as { status?: number; message?: string };
+  return `status=${e?.status ?? "unknown"} message=${e?.message ?? String(err)}`;
 }
 
 export async function createChatStream(
@@ -40,6 +43,7 @@ export async function createChatStream(
   extraHeaders?: Record<string, string>
 ) {
   const typedMessages = messages as OpenAI.Chat.ChatCompletionMessageParam[];
+
   for (const provider of PROVIDER_CHAIN) {
     for (const model of provider.models) {
       try {
@@ -63,17 +67,12 @@ export async function createChatStream(
 
         return new Response(stream, { headers: extraHeaders });
       } catch (err) {
-        const status = (err as { status?: number })?.status;
-        if (isRetryableStatus(status)) continue; // try next model/provider
-        // Non-retryable error (bad request, auth issue, etc.) — stop entirely
-        return Response.json(
-          { error: "The AI is temporarily unavailable. Please try again shortly." },
-          { status: 500 }
-        );
+        console.error(`[ai-providers] ${provider.name}/${model} failed — ${describeError(err)}`);
+        continue; // ALWAYS try the next model/provider, regardless of error type
       }
     }
   }
-  // Every provider and every model exhausted
+  console.error("[ai-providers] all providers and models exhausted for createChatStream");
   return Response.json(
     {
       error:
@@ -104,11 +103,11 @@ export async function createChatCompletion(
         });
         return completion.choices[0]?.message?.content || "";
       } catch (err) {
-        const status = (err as { status?: number })?.status;
-        if (status === 429 || status === 503) continue;
-        return null; // non-retryable error — give up entirely
+        console.error(`[ai-providers] ${provider.name}/${model} failed — ${describeError(err)}`);
+        continue; // ALWAYS try the next model/provider, regardless of error type
       }
     }
   }
-  return null; // every provider/model exhausted
+  console.error("[ai-providers] all providers and models exhausted for createChatCompletion");
+  return null;
 }
