@@ -405,6 +405,10 @@ export default function Core() {
   }
 
   async function handleVideoSearch(topic: string) {
+    if (!topic) {
+      setVideoData({ topic: "", videos: [] });
+      return;
+    }
     setVideoLoading(true);
     try {
       const res = await fetch("/api/video", {
@@ -654,7 +658,13 @@ export default function Core() {
       key={m.key}
       className={`mode-pill ${activeMode === m.key || processingMode === m.key ? "mode-active" : ""}`}
       style={{ "--mode-color": m.color } as React.CSSProperties}
-      onClick={() => setActiveMode(activeMode === m.key ? null : m.key)}
+      onClick={() => {
+        if (m.key === "video") {
+          setVideoData({ topic: "", videos: [] });
+        } else {
+          setActiveMode(activeMode === m.key ? null : m.key);
+        }
+      }}
     >
       <span className="sym" style={{ color: m.color }}>{m.sym}</span> {m.label}
     </div>

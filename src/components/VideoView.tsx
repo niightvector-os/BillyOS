@@ -21,6 +21,7 @@ export default function VideoView({
   const [active, setActive] = useState(0);
   const [query, setQuery] = useState("");
   const current = videos[active];
+  const isLanding = videos.length === 0 && !loading;
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +37,16 @@ export default function VideoView({
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M18 6 6 18M6 6l12 12" />
         </svg>
+      </button>
+
+      <button
+        className="yt-logo-lockup"
+        onClick={() => { setActive(0); onSearch(""); }}
+        aria-label="Back to YouTube search"
+        type="button"
+      >
+        <span className="yt-logo-main">YOUTUBE</span>
+        <span className="yt-logo-sub">BillyOs</span>
       </button>
 
       <div className="yt-search-bar-wrap">
@@ -59,6 +70,13 @@ export default function VideoView({
       </div>
 
       <div className="yt-content">
+        {isLanding && (
+          <div className="yt-landing">
+            <h2 className="yt-landing-title">Search Anything to get started</h2>
+            <p className="yt-landing-sub">Start watching videos to help us build a feed of videos that you'll love.</p>
+          </div>
+        )}
+
         {current && (
           <>
             <div className="yt-player">

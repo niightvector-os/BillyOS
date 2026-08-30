@@ -2766,3 +2766,66 @@ h1.title {
   color: #ffffff55;
   font-size: 12px;
 }
+
+.yt-logo-lockup {
+  position: fixed;
+  top: 14px;
+  left: 20px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.yt-logo-main {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: #E01F1F;
+  text-shadow: 0 0 18px #FF3B3B66, 0 2px 4px #00000088;
+}
+
+.yt-logo-sub {
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: 13px;
+  color: #ffffffcc;
+  transform: rotate(-3deg) translateX(2px);
+  margin-top: 2px;
+  text-shadow: 0 2px 6px #00000066;
+}
+
+.yt-landing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 24px;
+}
+
+.yt-landing-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 20px;
+  color: #f5f5f7;
+  margin-bottom: 10px;
+}
+
+.yt-landing-sub {
+  color: #ffffff66;
+  font-size: 14px;
+  max-width: 380px;
+}
+
+.yt-stage::-webkit-scrollbar-thumb {
+  background: #FF3B3B55;
+}
+
+.yt-stage {
+  scrollbar-color: #FF3B3B55 transparent;
+}
