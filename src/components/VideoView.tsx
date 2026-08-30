@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Video = { id: string; title: string; channel: string; thumbnail: string };
 export type VideoData = { topic: string; videos: Video[] };
+type FeedVideo = { video_id: string; title: string; channel: string; thumbnail: string; query?: string };
 
 export default function VideoView({
   topic,
@@ -11,17 +12,43 @@ export default function VideoView({
   onClose,
   onSearch,
   loading,
+  authHeaders,
 }: {
   topic: string;
   videos: Video[];
   onClose: () => void;
   onSearch: (query: string) => void;
   loading?: boolean;
+  authHeaders: () => Promise<Record<string, string>>;
 }) {
   const [active, setActive] = useState(0);
   const [query, setQuery] = useState("");
+  const [recent, setRecent] = useState<FeedVideo[]>([]);
+  const [suggestions, setSuggestions] = useState<FeedVideo[]>([]);
+  const [feedLoading, setFeedLoading] = useState(false);
   const current = videos[active];
   const isLanding = videos.length === 0 && !loading;
+
+  useEffect(() => {
+    if (!isLanding) return;
+    let cancelled = false;
+    (async () => {
+      setFeedLoading(true);
+      try {
+        const headers = await authHeaders();
+        const res = await fetch("/api/video/feed", { headers });
+        const data = await res.json();
+        if (!cancelled) {
+          setRecent(data.recent || []);
+          setSuggestions(data.suggestions || []);
+        }
+      } catch {
+        // feed is a nice-to-have — fail silently
+      }
+      if (!cancelled) setFeedLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [isLanding]);
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -30,6 +57,28 @@ export default function VideoView({
     setQuery("");
     setActive(0);
   }
+
+  async function logWatch(v: { id: string; title: string; channel: string; thumbnail: string }) {
+    try {
+      const headers = await authHeaders();
+      if (Object.keys(headers).length === 0) return; // not logged in, skip silently
+      await fetch("/api/video/feed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ videoId: v.id, title: v.title, channel: v.channel, thumbnail: v.thumbnail, query: topic || undefined }),
+      });
+    } catch {
+      // logging failure shouldn't interrupt watching
+    }
+  }
+
+  function playFromFeed(v: FeedVideo) {
+    onSearch(v.query || v.title);
+  }
+
+  useEffect(() => {
+    if (current) logWatch(current);
+  }, [current?.id]);
 
   return (
     <div className="yt-stage">
@@ -71,10 +120,48 @@ export default function VideoView({
 
       <div className="yt-content">
         {isLanding && (
-          <div className="yt-landing">
-            <h2 className="yt-landing-title">Search Anything to get started</h2>
-            <p className="yt-landing-sub">Start watching videos to help us build a feed of videos that you'll love.</p>
-          </div>
+          <>
+            {recent.length === 0 && suggestions.length === 0 && !feedLoading && (
+              <div className="yt-landing">
+                <h2 className="yt-landing-title">Search Anything to get started</h2>
+                <p className="yt-landing-sub">Start watching videos to help us build a feed of videos that you'll love.</p>
+              </div>
+            )}
+
+            {recent.length > 0 && (
+              <div className="yt-related" style={{ marginTop: 8 }}>
+                <h3 className="yt-related-label">Recently watched</h3>
+                <div className="yt-grid">
+                  {recent.map((v, i) => (
+                    <button key={i} className="yt-card" onClick={() => playFromFeed(v)}>
+                      <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
+                      <div className="yt-card-info">
+                        <span className="yt-card-title">{v.title}</span>
+                        <span className="yt-card-channel">{v.channel}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {suggestions.length > 0 && (
+              <div className="yt-related">
+                <h3 className="yt-related-label">Suggested for you</h3>
+                <div className="yt-grid">
+                  {suggestions.map((v, i) => (
+                    <button key={i} className="yt-card" onClick={() => playFromFeed(v)}>
+                      <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
+                      <div className="yt-card-info">
+                        <span className="yt-card-title">{v.title}</span>
+                        <span className="yt-card-channel">{v.channel}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {current && (

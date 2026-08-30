@@ -471,7 +471,7 @@ export default function Core() {
 
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
   if (mapData) return <MapView data={mapData} onClose={() => setMapData(null)} onFollowUp={handleMapFollowUp} loading={mapLoading} />;
-  if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} onSearch={handleVideoSearch} loading={videoLoading} />;
+  if (videoData) return <VideoView topic={videoData.topic} videos={videoData.videos} onClose={() => setVideoData(null)} onSearch={handleVideoSearch} loading={videoLoading} authHeaders={authHeaders} />;
   if (visualizeData) return <VisualizeView data={visualizeData} onClose={() => setVisualizeData(null)} onFollowUp={handleVisualizeFollowUp} loading={visualizeLoading} />;
 
   return (
