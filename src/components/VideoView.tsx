@@ -7,6 +7,43 @@ export type VideoData = { topic: string; videos: Video[] };
 type FeedVideo = { video_id: string; title: string; channel: string; thumbnail: string; query?: string };
 type Tab = "search" | "home" | "shorts" | "recent";
 
+const TOPICS = ["Music", "Gaming", "Sports", "News", "Comedy", "Movies", "Football", "Podcasts", "Live", "Cooking", "Tech"];
+
+function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio > 0.6),
+      { threshold: [0, 0.6, 1] }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="yt-clip-slide" ref={ref}>
+      <div className="yt-clip-card">
+        {inView ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${clip.id}?autoplay=1&mute=1&loop=1&playlist=${clip.id}&controls=1`}
+            title={clip.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <img src={clip.thumbnail} alt={clip.title} className="yt-clip-thumb-placeholder" />
+        )}
+      </div>
+      <p className="yt-clip-title">{clip.title}</p>
+      <p className="yt-clip-channel">{clip.channel}</p>
+    </div>
+  );
+}
+
 export default function VideoView({
   topic,
   videos,
@@ -22,7 +59,7 @@ export default function VideoView({
   loading?: boolean;
   authHeaders: () => Promise<Record<string, string>>;
 }) {
-  const [active, setActive] = useState(0);
+  const [directVideo, setDirectVideo] = useState<Video | null>(null);
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<Tab>("home");
   const [recent, setRecent] = useState<FeedVideo[]>([]);
@@ -30,39 +67,25 @@ export default function VideoView({
   const [feedLoading, setFeedLoading] = useState(false);
   const [homeVideos, setHomeVideos] = useState<Video[]>([]);
   const [homeLoading, setHomeLoading] = useState(false);
+  const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [clips, setClips] = useState<Video[]>([]);
   const [clipsLoading, setClipsLoading] = useState(false);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const current = videos[active];
-  const isPlaying = !!current;
+  const current = directVideo || videos[0];
+  const isPlaying = !!current && tab === "search";
 
-  // Load personalized recent/suggested feed once (used on the Recently Watched tab)
-  useEffect(() => {
-    (async () => {
-      setFeedLoading(true);
-      try {
-        const headers = await authHeaders();
-        const res = await fetch("/api/video/feed", { headers });
-        const data = await res.json();
-        setRecent(data.recent || []);
-        setSuggestions(data.suggestions || []);
-      } catch {}
-      setFeedLoading(false);
-    })();
-  }, []);
-
-  // Load Home (location-based trending) on first visit to that tab
-  useEffect(() => {
-    if (tab !== "home" || homeVideos.length > 0 || homeLoading) return;
+  function loadHome() {
     setHomeLoading(true);
-    const fetchTrending = (lat?: number, lng?: number) => {
+    setHomeVideos([]);
+    const fetchTrending = async (lat?: number, lng?: number) => {
+      const headers = await authHeaders();
       fetch("/api/video/trending", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lat, lng }),
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({ lat, lng, topic: activeTopic }),
       })
         .then((r) => r.json())
         .then((data) => setHomeVideos(data.videos || []))
@@ -78,9 +101,28 @@ export default function VideoView({
     } else {
       fetchTrending();
     }
-  }, [tab]);
+  }
 
-  // Load Clips on first visit to that tab
+  // Fresh fetch every time YouTube mode opens or the topic filter changes —
+  // no stale cache, matching real YouTube's "reopen = soft reset" behavior.
+  useEffect(() => {
+    loadHome();
+  }, [activeTopic]);
+
+  useEffect(() => {
+    (async () => {
+      setFeedLoading(true);
+      try {
+        const headers = await authHeaders();
+        const res = await fetch("/api/video/feed", { headers });
+        const data = await res.json();
+        setRecent(data.recent || []);
+        setSuggestions(data.suggestions || []);
+      } catch {}
+      setFeedLoading(false);
+    })();
+  }, []);
+
   useEffect(() => {
     if (tab !== "shorts" || clips.length > 0 || clipsLoading) return;
     setClipsLoading(true);
@@ -95,7 +137,6 @@ export default function VideoView({
       .finally(() => setClipsLoading(false));
   }, [tab]);
 
-  // Debounced search-suggestion lookup as the person types
   useEffect(() => {
     if (suggestDebounce.current) clearTimeout(suggestDebounce.current);
     if (!query.trim()) {
@@ -114,29 +155,34 @@ export default function VideoView({
     }, 250);
   }, [query]);
 
-  async function logWatch(v: { id: string; title: string; channel: string; thumbnail: string }) {
+  async function logWatch(v: { id: string; title: string; channel: string; thumbnail: string }, q?: string) {
     try {
       const headers = await authHeaders();
       if (Object.keys(headers).length === 0) return;
       await fetch("/api/video/feed", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...headers },
-        body: JSON.stringify({ videoId: v.id, title: v.title, channel: v.channel, thumbnail: v.thumbnail, query: topic || undefined }),
+        body: JSON.stringify({ videoId: v.id, title: v.title, channel: v.channel, thumbnail: v.thumbnail, query: q || undefined }),
       });
     } catch {}
   }
 
-  useEffect(() => {
-    if (current) logWatch(current);
-  }, [current?.id]);
+  // Play a specific video directly — no re-search, no risk of a different
+  // video loading than the one clicked.
+  function playDirect(v: Video, searchQueryForRelated?: string) {
+    setDirectVideo(v);
+    setTab("search");
+    logWatch(v, searchQueryForRelated);
+    if (searchQueryForRelated) onSearch(searchQueryForRelated); // populates the related-videos rail
+  }
 
   function runSearch(q: string) {
     if (!q.trim()) return;
     setShowSuggestions(false);
+    setDirectVideo(null);
     setTab("search");
     onSearch(q);
     setQuery("");
-    setActive(0);
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -144,18 +190,8 @@ export default function VideoView({
     runSearch(query);
   }
 
-  function playVideo(v: Video, list: Video[], index: number) {
-    setTab("search");
-    onSearch(""); // reset any in-flight state, then set directly below
-    // Directly set as the active playing video using the same shape VideoView expects
-    setTimeout(() => {
-      // handled by parent via onSearch normally, but since we already have the video,
-      // we just switch into search tab and rely on `videos`/`active` from parent state
-    }, 0);
-  }
-
   return (
-    <div className="yt-stage yt-stage-full">
+    <div className="yt-stage-full">
       <aside className="yt-sidebar">
         <button className={`yt-side-item ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -186,7 +222,7 @@ export default function VideoView({
 
         <button
           className="yt-logo-lockup"
-          onClick={() => { setTab("home"); setActive(0); onSearch(""); }}
+          onClick={() => { setTab("home"); setDirectVideo(null); onSearch(""); loadHome(); }}
           aria-label="Back to YouTube home"
           type="button"
         >
@@ -226,7 +262,32 @@ export default function VideoView({
         </div>
 
         <div className="yt-content-full">
-          {tab === "search" && isPlaying && (
+          {tab === "home" && (
+            <>
+              <div className="yt-topics-bar">
+                <button className={`yt-topic-chip ${activeTopic === null ? "active" : ""}`} onClick={() => setActiveTopic(null)}>All</button>
+                {TOPICS.map((t) => (
+                  <button key={t} className={`yt-topic-chip ${activeTopic === t ? "active" : ""}`} onClick={() => setActiveTopic(t)}>{t}</button>
+                ))}
+              </div>
+              <div className="yt-related">
+                {homeLoading && <p className="thinking-text">Loading...</p>}
+                <div className="yt-grid">
+                  {homeVideos.map((v) => (
+                    <button key={v.id} className="yt-card" onClick={() => playDirect(v, v.title)}>
+                      <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
+                      <div className="yt-card-info">
+                        <span className="yt-card-title">{v.title}</span>
+                        <span className="yt-card-channel">{v.channel}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {tab === "search" && isPlaying && current && (
             <div className="yt-watch-layout">
               <div className="yt-watch-main">
                 <div className="yt-player">
@@ -245,8 +306,8 @@ export default function VideoView({
               </div>
               <div className="yt-watch-side">
                 <h3 className="yt-related-label">More videos</h3>
-                {videos.map((v, i) => (
-                  <button key={v.id} className={`yt-side-card ${i === active ? "active" : ""}`} onClick={() => setActive(i)}>
+                {videos.map((v) => (
+                  <button key={v.id} className={`yt-side-card ${v.id === current.id ? "active" : ""}`} onClick={() => playDirect(v)}>
                     <div className="yt-side-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
                     <div className="yt-side-card-info">
                       <span className="yt-card-title">{v.title}</span>
@@ -260,44 +321,18 @@ export default function VideoView({
 
           {tab === "search" && loading && <p className="thinking-text" style={{ marginTop: 24 }}>Searching YouTube...</p>}
 
-          {tab === "search" && !isPlaying && !loading && videos.length === 0 && (
+          {tab === "search" && !isPlaying && !loading && (
             <div className="yt-landing">
               <h2 className="yt-landing-title">Search Anything to get started</h2>
               <p className="yt-landing-sub">Start watching videos to help us build a feed of videos that you'll love.</p>
             </div>
           )}
 
-          {tab === "home" && (
-            <div className="yt-related">
-              <h3 className="yt-related-label">Trending near you</h3>
-              {homeLoading && <p className="thinking-text">Loading...</p>}
-              <div className="yt-grid">
-                {homeVideos.map((v, i) => (
-                  <button key={v.id} className="yt-card" onClick={() => { setTab("search"); onSearch(v.title); }}>
-                    <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
-                    <div className="yt-card-info">
-                      <span className="yt-card-title">{v.title}</span>
-                      <span className="yt-card-channel">{v.channel}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
           {tab === "shorts" && (
-            <div className="yt-clips-feed">
+            <div className="yt-clips-scroll">
               {clipsLoading && <p className="thinking-text">Loading clips...</p>}
               {clips.map((c) => (
-                <div key={c.id} className="yt-clip-card">
-                  <iframe
-                    src={`https://www.youtube-nocookie.com/embed/${c.id}?rel=0&loop=1`}
-                    title={c.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                  <p className="yt-clip-title">{c.title}</p>
-                </div>
+                <ClipCard key={c.id} clip={c} isActive={false} />
               ))}
             </div>
           )}
@@ -316,7 +351,7 @@ export default function VideoView({
                   <h3 className="yt-related-label">Recently watched</h3>
                   <div className="yt-grid">
                     {recent.map((v, i) => (
-                      <button key={i} className="yt-card" onClick={() => { setTab("search"); onSearch(v.query || v.title); }}>
+                      <button key={i} className="yt-card" onClick={() => playDirect({ id: v.video_id, title: v.title, channel: v.channel, thumbnail: v.thumbnail }, v.query || v.title)}>
                         <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
                         <div className="yt-card-info">
                           <span className="yt-card-title">{v.title}</span>
@@ -332,7 +367,7 @@ export default function VideoView({
                   <h3 className="yt-related-label">Suggested for you</h3>
                   <div className="yt-grid">
                     {suggestions.map((v, i) => (
-                      <button key={i} className="yt-card" onClick={() => { setTab("search"); onSearch(v.title); }}>
+                      <button key={i} className="yt-card" onClick={() => playDirect({ id: v.video_id, title: v.title, channel: v.channel, thumbnail: v.thumbnail }, v.title)}>
                         <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
                         <div className="yt-card-info">
                           <span className="yt-card-title">{v.title}</span>

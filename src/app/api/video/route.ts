@@ -51,13 +51,13 @@ export async function POST(req: Request) {
   const { topic } = await req.json();
 
   // Primary, reliable: search the raw topic directly — never depends on AI succeeding
-  const primaryResults = await youtubeSearch(topic, 5);
+  const primaryResults = await youtubeSearch(topic, 16);
 
   // Bonus, best-effort: an AI-refined query, only used if it passes a sanity check
   const refined = await getRefinedQuery(topic);
-  const bonusResults = refined ? await youtubeSearch(refined, 3) : [];
+  const bonusResults = refined ? await youtubeSearch(refined, 8) : [];
 
-  const videos = dedupe([...primaryResults, ...bonusResults]).slice(0, 5);
+  const videos = dedupe([...primaryResults, ...bonusResults]).slice(0, 20);
 
   if (videos.length === 0) {
     return Response.json({ error: "Couldn't find a video for that right now." }, { status: 502 });

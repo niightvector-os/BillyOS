@@ -2958,3 +2958,199 @@ h1.title {
 .yt-main {
   scrollbar-color: #E01F1F55 transparent;
 }
+
+/* Topic tags bar */
+.yt-topics-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 24px;
+  scrollbar-width: none;
+}
+
+.yt-topics-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.yt-topic-chip {
+  flex-shrink: 0;
+  background: #272727;
+  border: none;
+  border-radius: 8px;
+  color: #f1f1f1;
+  font-size: 13px;
+  font-family: var(--font-display), sans-serif;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.yt-topic-chip:hover {
+  background: #3a3a3a;
+}
+
+.yt-topic-chip.active {
+  background: #f1f1f1;
+  color: #0f0f0f;
+  font-weight: 600;
+}
+
+/* Clips — real scroll-snap feed, one video per screen */
+.yt-clips-scroll {
+  height: calc(100vh - 140px);
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 0 -32px;
+}
+
+.yt-clip-slide {
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  height: calc(100vh - 140px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.yt-clip-card {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 9 / 16;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #E01F1F33, 0 8px 30px rgba(0,0,0,0.5);
+  background: #000;
+}
+
+.yt-clip-card iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.yt-clip-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-clip-title {
+  color: #f1f1f1;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-top: 10px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.yt-clip-channel {
+  color: #ffffff66;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+/* Topic tags bar */
+.yt-topics-bar {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 24px;
+  scrollbar-width: none;
+}
+
+.yt-topics-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.yt-topic-chip {
+  flex-shrink: 0;
+  background: #272727;
+  border: none;
+  border-radius: 8px;
+  color: #f1f1f1;
+  font-size: 13px;
+  font-family: var(--font-display), sans-serif;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.yt-topic-chip:hover {
+  background: #3a3a3a;
+}
+
+.yt-topic-chip.active {
+  background: #f1f1f1;
+  color: #0f0f0f;
+  font-weight: 600;
+}
+
+/* Clips — real scroll-snap feed, one video per screen */
+.yt-clips-scroll {
+  height: calc(100vh - 140px);
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  margin: 0 -32px;
+}
+
+.yt-clip-slide {
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  height: calc(100vh - 140px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.yt-clip-card {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 9 / 16;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px #E01F1F33, 0 8px 30px rgba(0,0,0,0.5);
+  background: #000;
+}
+
+.yt-clip-card iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.yt-clip-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-clip-title {
+  color: #f1f1f1;
+  font-size: 13.5px;
+  font-weight: 500;
+  margin-top: 10px;
+  max-width: 380px;
+  text-align: center;
+}
+
+.yt-clip-channel {
+  color: #ffffff66;
+  font-size: 12px;
+  margin-top: 2px;
+}
