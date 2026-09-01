@@ -12,6 +12,10 @@ const TOPICS = ["Music", "Gaming", "Sports", "News", "Comedy", "Movies", "Footba
 function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(true);
+  const [showControls, setShowControls] = useState(false);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -24,22 +28,62 @@ function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
     return () => observer.disconnect();
   }, []);
 
+  function revealControls() {
+    setShowControls(true);
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setShowControls(false), 1800);
+  }
+
+  const embedSrc = `https://www.youtube-nocookie.com/embed/${clip.id}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${clip.id}&controls=0&playsinline=1${playing ? "" : "&pause=1"}`;
+
   return (
     <div className="yt-clip-slide" ref={ref}>
-      <div className="yt-clip-card">
-        {inView ? (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${clip.id}?autoplay=1&mute=1&loop=1&playlist=${clip.id}&controls=1`}
-            title={clip.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <img src={clip.thumbnail} alt={clip.title} className="yt-clip-thumb-placeholder" />
-        )}
+      <div className="yt-clip-letterbox" onClick={revealControls}>
+        <div className="yt-clip-card">
+          {inView ? (
+            <iframe
+              key={`${clip.id}-${muted}`}
+              src={embedSrc}
+              title={clip.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <img src={clip.thumbnail} alt={clip.title} className="yt-clip-thumb-placeholder" />
+          )}
+
+          <div className={`yt-clip-top-overlay ${showControls ? "visible" : ""}`}>
+            <button className="yt-clip-icon-btn" onClick={(e) => { e.stopPropagation(); setPlaying((p) => !p); revealControls(); }} aria-label={playing ? "Pause" : "Play"}>
+              {playing ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7z" /></svg>
+              )}
+            </button>
+            <button className="yt-clip-icon-btn" onClick={(e) => { e.stopPropagation(); setMuted((m) => !m); revealControls(); }} aria-label={muted ? "Unmute" : "Mute"}>
+              {muted ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="m23 9-6 6M17 9l6 6" /></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /></svg>
+              )}
+            </button>
+          </div>
+
+          <div className="yt-clip-bottom-overlay">
+            <span className="yt-clip-handle">@{clip.channel.replace(/\s+/g, "").toLowerCase()}</span>
+            <span className="yt-clip-caption">{clip.title}</span>
+          </div>
+
+          <div className="yt-clip-actions">
+            <button className="yt-clip-action" aria-label="Like">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+            </button>
+            <button className="yt-clip-action" aria-label="Share">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="M16 6l-4-4-4 4" /><path d="M12 2v14" /></svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <p className="yt-clip-title">{clip.title}</p>
-      <p className="yt-clip-channel">{clip.channel}</p>
     </div>
   );
 }
@@ -246,6 +290,28 @@ export default function VideoView({
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               disabled={loading}
             />
+            <button
+              type="button"
+              className="yt-mic-btn"
+              aria-label="Voice search"
+              onClick={() => {
+                const SpeechRecognitionCtor = (window as unknown as { webkitSpeechRecognition?: new () => any; SpeechRecognition?: new () => any }).webkitSpeechRecognition || (window as unknown as { SpeechRecognition?: new () => any }).SpeechRecognition;
+                if (!SpeechRecognitionCtor) return;
+                const recognition = new SpeechRecognitionCtor();
+                recognition.lang = "en-US";
+                recognition.onresult = (e: any) => {
+                  const transcript = e.results[0][0].transcript;
+                  runSearch(transcript);
+                };
+                recognition.start();
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                <path d="M12 19v3" />
+              </svg>
+            </button>
           </form>
           {showSuggestions && searchSuggestions.length > 0 && (
             <div className="yt-suggest-dropdown">

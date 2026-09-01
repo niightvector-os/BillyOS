@@ -29,11 +29,17 @@ async function fetchGeneralTrending(regionCode: string) {
 }
 
 export async function POST(req: Request) {
-  const { lat, lng } = await req.json();
+  const { lat, lng, topic } = await req.json();
   const authHeader = req.headers.get("Authorization");
   const regionCode = await getCountryCode(lat, lng);
 
-  // Try to bias toward what the user has actually been watching recently.
+  // A topic chip was clicked — search that topic specifically, no blending.
+  if (topic) {
+    const videos = await searchYoutube(topic, 24).catch(() => []);
+    return Response.json({ videos });
+  }
+
+  // "All" selected — try to bias toward what the user has actually been watching recently.
   if (authHeader) {
     try {
       const supabase = createClient(
@@ -56,7 +62,6 @@ export async function POST(req: Request) {
             searchYoutube(recentTopic, 12).catch(() => []),
             fetchGeneralTrending(regionCode).catch(() => []),
           ]);
-          // Mix: topic-relevant videos first, general trending fills the rest
           const seen = new Set(topicResults.map((v: { id: string }) => v.id));
           const combined = [...topicResults, ...generalResults.filter((v: { id: string }) => !seen.has(v.id))];
           return Response.json({ videos: combined.slice(0, 24) });
