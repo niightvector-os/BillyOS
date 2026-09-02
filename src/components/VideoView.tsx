@@ -247,7 +247,7 @@ export default function VideoView({
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
             <path d="M14.5 2 5 13.5h6L9.5 22 19 10.5h-6L14.5 2z" />
           </svg>
-          <span>Clips</span>
+          <span>Shorts</span>
         </button>
         <button className={`yt-side-item ${tab === "recent" ? "active" : ""}`} onClick={() => setTab("recent")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -258,6 +258,7 @@ export default function VideoView({
       </aside>
 
       <div className="yt-main">
+        <div className="yt-topbar">
         <button className="yt-exit" onClick={onClose} aria-label="Close">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
             <path d="M18 6 6 18M6 6l12 12" />
@@ -276,43 +277,43 @@ export default function VideoView({
 
         <div className="yt-search-bar-wrap">
           <form className="yt-search-bar" onSubmit={handleSubmit} autoComplete="off">
-            <button type="submit" className="yt-search-btn" disabled={loading} aria-label="Search">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
-              </svg>
-            </button>
             <input
               type="text"
-              placeholder="Search on YouTube..."
+              placeholder="Search"
               value={query}
               onChange={(e) => { setQuery(e.target.value); setShowSuggestions(true); }}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               disabled={loading}
             />
-            <button
-              type="button"
-              className="yt-mic-btn"
-              aria-label="Voice search"
-              onClick={() => {
-                const SpeechRecognitionCtor = (window as unknown as { webkitSpeechRecognition?: new () => any; SpeechRecognition?: new () => any }).webkitSpeechRecognition || (window as unknown as { SpeechRecognition?: new () => any }).SpeechRecognition;
-                if (!SpeechRecognitionCtor) return;
-                const recognition = new SpeechRecognitionCtor();
-                recognition.lang = "en-US";
-                recognition.onresult = (e: any) => {
-                  const transcript = e.results[0][0].transcript;
-                  runSearch(transcript);
-                };
-                recognition.start();
-              }}
-            >
+            <button type="submit" className="yt-search-btn" disabled={loading} aria-label="Search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="9" y="2" width="6" height="12" rx="3" />
-                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
-                <path d="M12 19v3" />
+                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
               </svg>
             </button>
           </form>
+          <button
+            type="button"
+            className="yt-mic-btn"
+            aria-label="Voice search"
+            onClick={() => {
+              const SpeechRecognitionCtor = (window as unknown as { webkitSpeechRecognition?: new () => any; SpeechRecognition?: new () => any }).webkitSpeechRecognition || (window as unknown as { SpeechRecognition?: new () => any }).SpeechRecognition;
+              if (!SpeechRecognitionCtor) return;
+              const recognition = new SpeechRecognitionCtor();
+              recognition.lang = "en-US";
+              recognition.onresult = (e: any) => {
+                const transcript = e.results[0][0].transcript;
+                runSearch(transcript);
+              };
+              recognition.start();
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <rect x="9" y="2" width="6" height="12" rx="3" />
+              <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+              <path d="M12 19v3" />
+            </svg>
+          </button>
           {showSuggestions && searchSuggestions.length > 0 && (
             <div className="yt-suggest-dropdown">
               {searchSuggestions.map((s, i) => (
@@ -325,6 +326,7 @@ export default function VideoView({
               ))}
             </div>
           )}
+        </div>
         </div>
 
         <div className="yt-content-full">
