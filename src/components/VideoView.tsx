@@ -236,7 +236,7 @@ export default function VideoView({
 
   return (
     <div className="yt-stage-full">
-      <aside className="yt-sidebar">
+      <aside className={`yt-sidebar ${isPlaying ? "yt-sidebar-collapsed" : ""}`}>
         <button className={`yt-side-item ${tab === "home" ? "active" : ""}`} onClick={() => setTab("home")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
             <path d="M3 11l9-8 9 8" /><path d="M5 10v10h14V10" />

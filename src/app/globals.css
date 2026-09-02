@@ -3122,3 +3122,20 @@ h1.title {
   align-items: center;
   gap: 8px;
 }
+
+/* Sidebar auto-collapses to icon-only while a video is playing */
+.yt-sidebar {
+  transition: width 0.2s ease;
+}
+
+.yt-sidebar-collapsed {
+  width: 56px;
+}
+
+.yt-sidebar-collapsed .yt-side-item {
+  padding: 12px 0;
+}
+
+.yt-sidebar-collapsed .yt-side-item span {
+  display: none;
+}
