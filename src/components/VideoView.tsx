@@ -114,6 +114,7 @@ export default function VideoView({
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [clips, setClips] = useState<Video[]>([]);
   const [clipsLoading, setClipsLoading] = useState(false);
+  const [homeShorts, setHomeShorts] = useState<Video[]>([]);
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -180,6 +181,17 @@ export default function VideoView({
       .catch(() => {})
       .finally(() => setClipsLoading(false));
   }, [tab]);
+
+  useEffect(() => {
+    fetch("/api/video/clips", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: "" }),
+    })
+      .then((r) => r.json())
+      .then((data) => setHomeShorts((data.clips || []).slice(0, 10)))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (suggestDebounce.current) clearTimeout(suggestDebounce.current);
@@ -356,6 +368,25 @@ export default function VideoView({
                   ))}
                 </div>
               </div>
+              {homeShorts.length > 0 && (
+                <div className="yt-shorts-shelf">
+                  <div className="yt-shorts-shelf-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M14.5 2 5 13.5h6L9.5 22 19 10.5h-6L14.5 2z" />
+                    </svg>
+                    <span>Shorts</span>
+                  </div>
+                  <div className="yt-shorts-shelf-scroll">
+                    {homeShorts.map((v) => (
+                      <button key={v.id} className="yt-shorts-shelf-card" onClick={() => playDirect(v, v.title)}>
+                        <div className="yt-shorts-shelf-thumb"><img src={v.thumbnail} alt={v.title} /></div>
+                        <span className="yt-shorts-shelf-title">{v.title}</span>
+                        {v.views && <span className="yt-shorts-shelf-meta">{v.views}</span>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 

@@ -3161,3 +3161,73 @@ h1.title {
   color: #ffffff66;
   font-size: 12.5px;
 }
+
+/* Inline Shorts shelf on Home */
+.yt-shorts-shelf {
+  margin-top: 32px;
+}
+
+.yt-shorts-shelf-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #E01F1F;
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+
+.yt-shorts-shelf-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.yt-shorts-shelf-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.yt-shorts-shelf-card {
+  flex-shrink: 0;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+}
+
+.yt-shorts-shelf-thumb {
+  width: 160px;
+  height: 284px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.yt-shorts-shelf-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-shorts-shelf-title {
+  color: #f1f1f1;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.yt-shorts-shelf-meta {
+  color: #ffffff66;
+  font-size: 12px;
+}
