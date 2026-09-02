@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 
-type Video = { id: string; title: string; channel: string; thumbnail: string };
+type Video = { id: string; title: string; channel: string; thumbnail: string; duration?: string; views?: string };
 export type VideoData = { topic: string; videos: Video[] };
 type FeedVideo = { video_id: string; title: string; channel: string; thumbnail: string; query?: string };
 type Tab = "search" | "home" | "shorts" | "recent";
@@ -343,10 +343,14 @@ export default function VideoView({
                 <div className="yt-grid">
                   {homeVideos.map((v) => (
                     <button key={v.id} className="yt-card" onClick={() => playDirect(v, v.title)}>
-                      <div className="yt-card-thumb"><img src={v.thumbnail} alt={v.title} /></div>
+                      <div className="yt-card-thumb">
+                        <img src={v.thumbnail} alt={v.title} />
+                        {v.duration && <span className="yt-card-duration">{v.duration}</span>}
+                      </div>
                       <div className="yt-card-info">
                         <span className="yt-card-title">{v.title}</span>
                         <span className="yt-card-channel">{v.channel}</span>
+                        {v.views && <span className="yt-card-meta">{v.views}</span>}
                       </div>
                     </button>
                   ))}
