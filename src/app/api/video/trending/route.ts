@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { searchYoutube } from "@/lib/youtube";
+import { searchYoutube, formatDuration, formatViews } from "@/lib/youtube";
 
 async function getCountryCode(lat?: number, lng?: number): Promise<string> {
   if (lat == null || lng == null) return "US";
@@ -16,16 +16,25 @@ async function getCountryCode(lat?: number, lng?: number): Promise<string> {
 }
 
 async function fetchGeneralTrending(regionCode: string) {
-  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&chart=mostPopular&regionCode=${regionCode}&maxResults=20&key=${process.env.YOUTUBE_API_KEY}`;
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&chart=mostPopular&regionCode=${regionCode}&maxResults=20&key=${process.env.YOUTUBE_API_KEY}`;
   const res = await fetch(url);
   const data = await res.json();
   if (!res.ok || !data.items) return [];
-  return data.items.map((item: { id: string; snippet: { title: string; channelTitle: string; thumbnails?: { medium?: { url: string } } } }) => ({
-    id: item.id,
-    title: item.snippet.title,
-    channel: item.snippet.channelTitle,
-    thumbnail: item.snippet.thumbnails?.medium?.url,
-  }));
+  return data.items.map(
+    (item: {
+      id: string;
+      snippet: { title: string; channelTitle: string; thumbnails?: { medium?: { url: string } } };
+      contentDetails?: { duration?: string };
+      statistics?: { viewCount?: string };
+    }) => ({
+      id: item.id,
+      title: item.snippet.title,
+      channel: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails?.medium?.url,
+      duration: formatDuration(item.contentDetails?.duration),
+      views: formatViews(item.statistics?.viewCount),
+    })
+  );
 }
 
 export async function POST(req: Request) {
