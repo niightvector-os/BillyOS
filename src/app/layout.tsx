@@ -21,6 +21,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "BillyOS",
   description: "An AI environment that builds the experience around the answer.",
+  verification: {
+    google: "d_0WwkdAPTGZntmipcTisfANiq2XW_FimwrGMM-_GWk",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
