@@ -2870,13 +2870,6 @@ h1.title {
   background: #000;
 }
 
-.yt-clip-card iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  pointer-events: none;
-}
-
 .yt-clip-thumb-placeholder {
   width: 100%;
   height: 100%;
@@ -2938,31 +2931,6 @@ h1.title {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.yt-clip-actions {
-  position: absolute;
-  right: 10px;
-  bottom: 60px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  z-index: 4;
-}
-
-.yt-clip-action {
-  background: none;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.7));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.yt-clip-action:hover {
-  color: #E01F1F;
 }
 
 /* Top bar — logo, search, exit, all one row */
@@ -3243,4 +3211,18 @@ h1.title {
 
 .yt-stage-full * {
   scrollbar-color: #E01F1F66 transparent;
+}
+
+/* Oversized + centered + cropped: fills the 9:16 frame edge-to-edge with no
+   pillarbox bars, by letting the container's overflow:hidden crop away the
+   black bars that YouTube's player always renders around vertical video. */
+.yt-clip-card iframe {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 100%;
+  width: calc((100vh - 140px) * 16 / 9);
+  transform: translateX(-50%);
+  border: none;
+  pointer-events: none;
 }

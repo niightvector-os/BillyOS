@@ -11,6 +11,7 @@ const TOPICS = ["Music", "Gaming", "Sports", "News", "Comedy", "Movies", "Footba
 
 function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [inView, setInView] = useState(false);
   const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(true);
@@ -28,13 +29,27 @@ function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
     return () => observer.disconnect();
   }, []);
 
+  function sendCommand(func: string) {
+    iframeRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args: [] }), "*");
+  }
+
+  // Mute/pause happen live via the YouTube player API — never by reloading
+  // the iframe's src, which would restart the clip from 0:00.
+  useEffect(() => {
+    sendCommand(muted ? "mute" : "unMute");
+  }, [muted, inView]);
+
+  useEffect(() => {
+    sendCommand(playing ? "playVideo" : "pauseVideo");
+  }, [playing, inView]);
+
   function revealControls() {
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => setShowControls(false), 1800);
   }
 
-  const embedSrc = `https://www.youtube-nocookie.com/embed/${clip.id}?autoplay=1&mute=${muted ? 1 : 0}&loop=1&playlist=${clip.id}&controls=0&playsinline=1${playing ? "" : "&pause=1"}`;
+  const embedSrc = `https://www.youtube-nocookie.com/embed/${clip.id}?autoplay=1&mute=1&loop=1&playlist=${clip.id}&controls=0&playsinline=1&enablejsapi=1`;
 
   return (
     <div className="yt-clip-slide" ref={ref}>
@@ -42,11 +57,15 @@ function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
         <div className="yt-clip-card">
           {inView ? (
             <iframe
-              key={`${clip.id}-${muted}`}
+              ref={iframeRef}
               src={embedSrc}
               title={clip.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
+              onLoad={() => {
+                sendCommand(muted ? "mute" : "unMute");
+                sendCommand(playing ? "playVideo" : "pauseVideo");
+              }}
             />
           ) : (
             <img src={clip.thumbnail} alt={clip.title} className="yt-clip-thumb-placeholder" />
@@ -72,15 +91,6 @@ function ClipCard({ clip, isActive }: { clip: Video; isActive: boolean }) {
           <div className="yt-clip-bottom-overlay">
             <span className="yt-clip-handle">@{clip.channel.replace(/\s+/g, "").toLowerCase()}</span>
             <span className="yt-clip-caption">{clip.title}</span>
-          </div>
-
-          <div className="yt-clip-actions">
-            <button className="yt-clip-action" aria-label="Like">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" /></svg>
-            </button>
-            <button className="yt-clip-action" aria-label="Share">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" /><path d="M16 6l-4-4-4 4" /><path d="M12 2v14" /></svg>
-            </button>
           </div>
         </div>
       </div>
