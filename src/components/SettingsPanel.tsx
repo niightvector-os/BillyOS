@@ -96,7 +96,7 @@ export default function SettingsPanel({ onClose }: { onClose: () => void }) {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
   return (

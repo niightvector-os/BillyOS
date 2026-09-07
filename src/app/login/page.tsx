@@ -5,17 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-const STACK = [
-  { name: "Next.js", color: "#ffffff" },
-  { name: "Supabase", color: "#3ECF8E" },
-  { name: "Groq", color: "#F55036" },
-  { name: "OpenRouter", color: "#6C6CF5" },
-  { name: "Gemini", color: "#4285F4" },
-  { name: "YouTube Data API", color: "#FF0000" },
-  { name: "Tavily", color: "#00B5AD" },
-  { name: "OpenStreetMap", color: "#7EBC6F" },
-];
-
 export default function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -73,17 +62,11 @@ export default function LoginPage() {
       <div className="auth-side-left">
         <Link href="/" className="auth-back">← billyos.co</Link>
         <div className="auth-left-content">
-          <img src="/brand/wordmark-dark.svg" alt="BillyOS" className="auth-wordmark-full" />
-          <p className="auth-left-tagline">One AI workspace — chat, research, video, maps, and study, in one place.</p>
-        </div>
-        <div className="auth-stack-marquee">
-          <div className="auth-stack-track">
-            {[...STACK, ...STACK].map((s, i) => (
-              <span key={i} className="auth-stack-chip" style={{ borderColor: `${s.color}55`, color: s.color }}>
-                {s.name}
-              </span>
-            ))}
+          <div className="auth-wordmark-full">
+            <img src="/favicons/logo-mark-512.png" alt="" className="auth-mark-icon" />
+            <span className="auth-mark-text">Billy<span className="auth-mark-os">OS</span></span>
           </div>
+          <p className="auth-left-tagline">One AI workspace — chat, research, video, maps, and study, in one place.</p>
         </div>
       </div>
 

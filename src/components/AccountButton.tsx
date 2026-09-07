@@ -21,7 +21,7 @@ export default function AccountButton() {
   async function handleSignOut() {
     await supabase.auth.signOut();
     setMenuOpen(false);
-    window.location.href = "/";
+    window.location.href = "/login";
   }
 
   if (!user) {
