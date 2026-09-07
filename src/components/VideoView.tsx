@@ -271,12 +271,6 @@ export default function VideoView({
 
       <div className="yt-main">
         <div className="yt-topbar">
-        <button className="yt-exit" onClick={onClose} aria-label="Close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-
         <button
           className="yt-logo-lockup"
           onClick={() => { setTab("home"); setDirectVideo(null); onSearch(""); loadHome(); }}
@@ -339,6 +333,11 @@ export default function VideoView({
             </div>
           )}
         </div>
+        <button className="yt-exit" onClick={onClose} aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
         </div>
 
         <div className="yt-content-full">
