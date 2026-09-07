@@ -232,6 +232,15 @@ export default function VideoView({
     if (searchQueryForRelated) onSearch(searchQueryForRelated); // populates the related-videos rail
   }
 
+  // Open a short in the real vertical Shorts frame — never the regular watch page.
+  function openShort(v: Video) {
+    setClips((prev) => {
+      const base = prev.length > 0 ? prev : homeShorts;
+      return [v, ...base.filter((c) => c.id !== v.id)];
+    });
+    setTab("shorts");
+  }
+
   function runSearch(q: string) {
     if (!q.trim()) return;
     setShowSuggestions(false);
@@ -377,7 +386,7 @@ export default function VideoView({
                   </div>
                   <div className="yt-shorts-shelf-scroll">
                     {homeShorts.map((v) => (
-                      <button key={v.id} className="yt-shorts-shelf-card" onClick={() => playDirect(v, v.title)}>
+                      <button key={v.id} className="yt-shorts-shelf-card" onClick={() => openShort(v)}>
                         <div className="yt-shorts-shelf-thumb"><img src={v.thumbnail} alt={v.title} /></div>
                         <span className="yt-shorts-shelf-title">{v.title}</span>
                         {v.views && <span className="yt-shorts-shelf-meta">{v.views}</span>}
