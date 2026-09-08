@@ -61,6 +61,7 @@ export default function Core() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMode, setActiveMode] = useState<string | null>(null);
+  const [studyWorkspaceOpen, setStudyWorkspaceOpen] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [studyData, setStudyData] = useState<StudySet | null>(null);
   const [studyLoading, setStudyLoading] = useState(false);
@@ -108,6 +109,17 @@ export default function Core() {
     !!((window as WindowWithSpeech).SpeechRecognition || (window as WindowWithSpeech).webkitSpeechRecognition);
 
   const busy = studyLoading || mapLoading || videoLoading || visualizeLoading;
+
+  useEffect(() => {
+    function openStudy() {
+      setStudyWorkspaceOpen(true);
+      setActiveMode(null);
+      setStudyData(null);
+    }
+
+    window.addEventListener("billyos:open-study", openStudy);
+    return () => window.removeEventListener("billyos:open-study", openStudy);
+  }, []);
 
   useEffect(() => {
     const SpeechRecognitionCtor = (window as WindowWithSpeech).SpeechRecognition || (window as WindowWithSpeech).webkitSpeechRecognition;
@@ -468,6 +480,18 @@ export default function Core() {
   }
 
   const idle = messages.length === 0;
+
+  if (studyWorkspaceOpen) {
+    return (
+      <StudyMode
+        data={studyData}
+        onClose={() => {
+          setStudyWorkspaceOpen(false);
+          setStudyData(null);
+        }}
+      />
+    );
+  }
 
   if (studyData) return <StudyMode data={studyData} onClose={() => setStudyData(null)} />;
   if (mapData) return <MapView data={mapData} onClose={() => setMapData(null)} onFollowUp={handleMapFollowUp} loading={mapLoading} />;

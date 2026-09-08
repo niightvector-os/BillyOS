@@ -108,6 +108,18 @@ export default function Sidebar({ ghostActive = false }: { ghostActive?: boolean
           </button>
         </div>
 
+        <button
+          className="sb-new sb-study-launch"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent("billyos:open-study"));
+            setOpen(false);
+          }}
+        >
+          <span className="sb-study-mark">▣</span>
+          <span>Study</span>
+          <span className="sb-shortcut">↗</span>
+        </button>
+
         <button className="sb-new" onClick={() => { startNewChat(); setOpen(false); }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" />

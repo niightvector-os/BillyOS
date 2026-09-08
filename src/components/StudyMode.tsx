@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type StudySet = {
   topic: string;
@@ -11,115 +11,625 @@ export type StudySet = {
   quiz: { question: string; options: string[]; correct_index: number }[];
 };
 
-export default function StudyMode({ data, onClose }: { data: StudySet; onClose: () => void }) {
-  const [tab, setTab] = useState<"notes" | "cards" | "quiz">("notes");
-  const [cardIndex, setCardIndex] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(data.quiz.length).fill(null));
-  const [submitted, setSubmitted] = useState(false);
+type StudyView =
+  | "home"
+  | "explain"
+  | "essay"
+  | "challenge"
+  | "dashboard"
+  | "result";
 
-  const score = answers.filter((a, i) => a === data.quiz[i]?.correct_index).length;
+type StudyModeProps = {
+  data?: StudySet | null;
+  onClose: () => void;
+};
 
-  function selectAnswer(qIndex: number, optIndex: number) {
-    if (submitted) return;
-    const next = [...answers];
-    next[qIndex] = optIndex;
-    setAnswers(next);
+const suggestions = [
+  "Explain photosynthesis simply",
+  "Help me understand quadratic equations",
+  "Explain the causes of World War I",
+  "Teach me how chemical bonding works",
+];
+
+export default function StudyMode({ data: initialData = null, onClose }: StudyModeProps) {
+  const [view, setView] = useState<StudyView>(initialData ? "result" : "home");
+  const [data, setData] = useState<StudySet | null>(initialData);
+  const [input, setInput] = useState("");
+  const [essayChoiceOpen, setEssayChoiceOpen] = useState(false);
+  const [essayPrompt, setEssayPrompt] = useState("");
+  const [challengeTopic, setChallengeTopic] = useState("");
+  const [challengeQuestions, setChallengeQuestions] = useState(10);
+  const [challengeDifficulty, setChallengeDifficulty] = useState("Medium");
+  const [challengeType, setChallengeType] = useState("Mixed");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [readOpen, setReadOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setData(initialData);
+      setView("result");
+    }
+  }, [initialData]);
+
+  function resetInput() {
+    setInput("");
+    setAttachedFile(null);
+    setImagePreview(null);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
   }
 
-  function nextCard() {
-    setFlipped(false);
-    setCardIndex((i) => (i + 1) % data.flashcards.length);
-  }
-  function prevCard() {
-    setFlipped(false);
-    setCardIndex((i) => (i - 1 + data.flashcards.length) % data.flashcards.length);
+  async function submitStudy(topicOverride?: string) {
+    const topic = (topicOverride ?? input).trim();
+    if (!topic || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/study", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          preferred_language: "en",
+          material: attachedFile?.text || undefined,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Study request failed.");
+      }
+
+      setData(result);
+      setView("result");
+      resetInput();
+    } catch (error) {
+      console.error("[STUDY UI]", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  return (
-    <div className="study-overlay">
-      <div className="study-panel">
-        <div className="study-header">
-          <div>
-            <div className="study-label">STUDY MODE</div>
-            <h2 className="study-title">{data.topic}</h2>
+  function handlePromptSubmit() {
+    const value = input.trim();
+    if (!value || isSubmitting) return;
+
+    const essayIntent =
+      /\bessay\b/i.test(value) ||
+      /\bwrite (an|a)\b.*\bessay\b/i.test(value);
+
+    if (essayIntent) {
+      setEssayPrompt(value);
+      setEssayChoiceOpen(true);
+      return;
+    }
+
+    submitStudy(value);
+  }
+
+  async function handleFile(file: File) {
+    setAttachedFile({ name: file.name, text: "" });
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await res.json();
+
+      if (result?.extractedText) {
+        setAttachedFile({
+          name: result.filename || file.name,
+          text: result.extractedText,
+        });
+      }
+    } catch (error) {
+      console.error("[STUDY FILE]", error);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find((item) => item.type.startsWith("image/"));
+
+    if (!imageItem) return;
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+
+    e.preventDefault();
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  const dashboard = (
+    <div className="study-dashboard">
+      <div className="study-dashboard-hero">
+        <div>
+          <div className="study-eyebrow">YOUR LEARNING</div>
+          <h2>Keep getting better.</h2>
+          <p>
+            BillyOS will build your learning picture from the work you complete,
+            the questions you answer, and the areas you revisit.
+          </p>
+        </div>
+
+        <button className="study-soft-button" onClick={() => setView("home")}>
+          Back to Study
+        </button>
+      </div>
+
+      <div className="study-stat-grid">
+        <div className="study-stat-card study-stat-large">
+          <span>Overall mastery</span>
+          <strong>84%</strong>
+          <div className="study-progress">
+            <span style={{ width: "84%" }} />
           </div>
-          <button className="study-close" onClick={onClose} aria-label="Close">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
-        <div className="study-tabs">
-          <button className={`study-tab ${tab === "notes" ? "active" : ""}`} onClick={() => setTab("notes")}>Notes</button>
-          <button className={`study-tab ${tab === "cards" ? "active" : ""}`} onClick={() => setTab("cards")}>Flashcards</button>
-          <button className={`study-tab ${tab === "quiz" ? "active" : ""}`} onClick={() => setTab("quiz")}>Quiz</button>
+        <div className="study-stat-card">
+          <span>Learning streak</span>
+          <strong>12</strong>
+          <small>days</small>
         </div>
 
-        <div className="study-body">
-          {tab === "notes" && (
-            <div>
-              <p className="study-summary">{data.summary}</p>
-              <h3 className="study-subhead">Key Concepts</h3>
-              <ul className="study-list">
-                {data.key_concepts.map((c, i) => <li key={i}>{c}</li>)}
-              </ul>
-              <h3 className="study-subhead">Notes</h3>
-              <ul className="study-list">
-                {data.notes.map((n, i) => <li key={i}>{n}</li>)}
-              </ul>
-            </div>
-          )}
+        <div className="study-stat-card">
+          <span>Questions answered</span>
+          <strong>184</strong>
+        </div>
 
-          {tab === "cards" && data.flashcards.length > 0 && (
-            <div className="study-cards">
-              <div className={`flashcard ${flipped ? "flipped" : ""}`} onClick={() => setFlipped(!flipped)}>
-                <div className="flashcard-face flashcard-front">{data.flashcards[cardIndex].front}</div>
-                <div className="flashcard-face flashcard-back">{data.flashcards[cardIndex].back}</div>
-              </div>
-              <div className="flashcard-nav">
-                <button onClick={prevCard}>←</button>
-                <span>{cardIndex + 1} / {data.flashcards.length}</span>
-                <button onClick={nextCard}>→</button>
-              </div>
-              <p className="flashcard-hint">Tap the card to flip</p>
-            </div>
-          )}
-
-          {tab === "quiz" && (
-            <div className="study-quiz">
-              {data.quiz.map((q, qi) => (
-                <div key={qi} className="quiz-question">
-                  <p className="quiz-q-text">{qi + 1}. {q.question}</p>
-                  <div className="quiz-options">
-                    {q.options.map((opt, oi) => {
-                      const isSelected = answers[qi] === oi;
-                      const isCorrect = submitted && oi === q.correct_index;
-                      const isWrong = submitted && isSelected && oi !== q.correct_index;
-                      return (
-                        <button
-                          key={oi}
-                          className={`quiz-option ${isSelected ? "selected" : ""} ${isCorrect ? "correct" : ""} ${isWrong ? "wrong" : ""}`}
-                          onClick={() => selectAnswer(qi, oi)}
-                        >
-                          {opt}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-
-              {!submitted ? (
-                <button className="quiz-submit" onClick={() => setSubmitted(true)}>Check Answers</button>
-              ) : (
-                <div className="quiz-score">Score: {score} / {data.quiz.length}</div>
-              )}
-            </div>
-          )}
+        <div className="study-stat-card">
+          <span>Study time</span>
+          <strong>8h 42m</strong>
         </div>
       </div>
+
+      <div className="study-dashboard-grid">
+        <div className="study-panel-card">
+          <div className="study-card-label">STRENGTHS</div>
+          <h3>Where you're strong</h3>
+          <div className="study-topic-row">
+            <span>Biology</span><b>92%</b>
+          </div>
+          <div className="study-topic-row">
+            <span>History</span><b>88%</b>
+          </div>
+          <div className="study-topic-row">
+            <span>French</span><b>84%</b>
+          </div>
+        </div>
+
+        <div className="study-panel-card">
+          <div className="study-card-label">NEEDS ATTENTION</div>
+          <h3>Where BillyOS would focus next</h3>
+          <div className="study-topic-row">
+            <span>Algebra</span><b>48%</b>
+          </div>
+          <div className="study-topic-row">
+            <span>Chemistry</span><b>61%</b>
+          </div>
+          <div className="study-topic-row">
+            <span>Physics</span><b>67%</b>
+          </div>
+        </div>
+      </div>
+
+      <div className="study-panel-card study-continue-card">
+        <div>
+          <div className="study-card-label">CONTINUE LEARNING?</div>
+          <h3>Pick up where you left off.</h3>
+          <p>Your recent Study work stays available so you can return without starting over.</p>
+        </div>
+        <button className="study-primary-button" onClick={() => setView("home")}>
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const result = data && (
+    <div className="study-result">
+      <div className="study-result-topbar">
+        <button className="study-back-button" onClick={() => setView("home")}>
+          ← Study Home
+        </button>
+
+        <div className="study-result-title">
+          <span>STUDY</span>
+          <strong>{data.topic}</strong>
+        </div>
+
+        <button className="study-icon-button" onClick={() => setReadOpen((v) => !v)} aria-label="Read aloud">
+          🔊
+        </button>
+      </div>
+
+      {readOpen && (
+        <div className="study-read-popover">
+          <strong>Read aloud</strong>
+          <span>Voice controls will connect to your selected voice provider.</span>
+          <button onClick={() => setReadOpen(false)}>Close</button>
+        </div>
+      )}
+
+      <div className="study-result-content">
+        <section className="study-result-hero">
+          <div className="study-card-label">UNDERSTAND</div>
+          <h1>{data.topic}</h1>
+          <p>{data.summary}</p>
+
+          <div className="study-result-actions">
+            <button className="study-primary-button" onClick={() => setView("challenge")}>
+              Challenge yourself
+            </button>
+            <button className="study-soft-button" onClick={() => setView("home")}>
+              Ask another question
+            </button>
+          </div>
+        </section>
+
+        <section className="study-content-card">
+          <div className="study-card-label">KEY CONCEPTS</div>
+          <div className="study-concept-grid">
+            {data.key_concepts.map((concept, index) => (
+              <div className="study-concept" key={`${concept}-${index}`}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <p>{concept}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="study-content-card">
+          <div className="study-card-label">NOTES</div>
+          <div className="study-notes">
+            {data.notes.map((note, index) => (
+              <div className="study-note" key={`${note}-${index}`}>
+                <span>•</span>
+                <p>{note}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="study-content-card">
+          <div className="study-card-label">FLASHCARDS</div>
+          <div className="study-flash-preview">
+            {data.flashcards.slice(0, 3).map((card, index) => (
+              <div className="study-flash-card" key={index}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <strong>{card.front}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="study-content-card">
+          <div className="study-card-label">QUIZ</div>
+          <p className="study-muted">
+            {data.quiz.length} questions are ready whenever you want to test yourself.
+          </p>
+          <button className="study-secondary-button" onClick={() => setView("challenge")}>
+            Start challenge
+          </button>
+        </section>
+      </div>
+    </div>
+  );
+
+  const essay = (
+    <div className="study-special-workspace">
+      <button className="study-back-button" onClick={() => setView("home")}>
+        ← Study Home
+      </button>
+
+      <div className="study-special-header">
+        <div className="study-card-label">ESSAY STUDIO</div>
+        <h1>Build your answer.</h1>
+        <p>Start with the question, then let BillyOS help you understand, structure, draft, and improve the response.</p>
+      </div>
+
+      <div className="study-essay-flow">
+        <div className="study-flow-card">
+          <span>01</span>
+          <strong>Understand</strong>
+          <p>Break down what the question is really asking.</p>
+        </div>
+        <div className="study-flow-card">
+          <span>02</span>
+          <strong>Build an argument</strong>
+          <p>Explore ideas, evidence, and a logical structure.</p>
+        </div>
+        <div className="study-flow-card">
+          <span>03</span>
+          <strong>Draft & improve</strong>
+          <p>Work through a draft and refine clarity and structure.</p>
+        </div>
+      </div>
+
+      <div className="study-special-input-card">
+        <textarea
+          value={essayPrompt}
+          onChange={(e) => setEssayPrompt(e.target.value)}
+          placeholder="Paste or write your essay question..."
+        />
+        <button
+          className="study-primary-button"
+          onClick={() => submitStudy(`Help me understand and structure an essay for: ${essayPrompt}`)}
+        >
+          Start Essay Studio
+        </button>
+      </div>
+    </div>
+  );
+
+  const challenge = (
+    <div className="study-special-workspace">
+      <button className="study-back-button" onClick={() => setView(data ? "result" : "home")}>
+        ← Back
+      </button>
+
+      <div className="study-special-header">
+        <div className="study-card-label">CHALLENGE MODE</div>
+        <h1>Set your own test.</h1>
+        <p>You decide the topic, number of questions, difficulty, and format.</p>
+      </div>
+
+      <div className="study-challenge-card">
+        <label>
+          <span>Topic</span>
+          <input
+            value={challengeTopic}
+            onChange={(e) => setChallengeTopic(e.target.value)}
+            placeholder={data?.topic || "What do you want to test yourself on?"}
+          />
+        </label>
+
+        <label>
+          <span>Questions</span>
+          <div className="study-stepper">
+            <button onClick={() => setChallengeQuestions((v) => Math.max(5, v - 1))}>−</button>
+            <strong>{challengeQuestions}</strong>
+            <button onClick={() => setChallengeQuestions((v) => Math.min(50, v + 1))}>+</button>
+          </div>
+        </label>
+
+        <label>
+          <span>Difficulty</span>
+          <div className="study-choice-row">
+            {["Easy", "Medium", "Hard", "Extreme"].map((level) => (
+              <button
+                key={level}
+                className={challengeDifficulty === level ? "selected" : ""}
+                onClick={() => setChallengeDifficulty(level)}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+        </label>
+
+        <label>
+          <span>Question type</span>
+          <div className="study-choice-row">
+            {["Mixed", "Multiple choice", "Written"].map((type) => (
+              <button
+                key={type}
+                className={challengeType === type ? "selected" : ""}
+                onClick={() => setChallengeType(type)}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </label>
+
+        <button
+          className="study-primary-button study-wide-button"
+          onClick={() =>
+            submitStudy(
+              `Create a ${challengeDifficulty.toLowerCase()} ${challengeType.toLowerCase()} test on ${
+                challengeTopic || data?.topic || "this topic"
+              } with exactly ${challengeQuestions} questions.`
+            )
+          }
+        >
+          Generate Challenge
+        </button>
+      </div>
+    </div>
+  );
+
+  const home = (
+    <div className="study-home">
+      <div className="study-home-brand">
+        <img src="/favicons/logo-mark-64.png" alt="BillyOS AI" />
+        <div>
+          <span>BillyOS AI</span>
+          <strong>STUDY</strong>
+        </div>
+      </div>
+
+      <button className="study-home-dashboard" onClick={() => setView("dashboard")}>
+        <span>Dashboard</span>
+        <b>↗</b>
+      </button>
+
+      <div className="study-orbit study-orbit-one" />
+      <div className="study-orbit study-orbit-two" />
+      <div className="study-glow" />
+      <div className="study-floating-dot study-dot-one" />
+      <div className="study-floating-dot study-dot-two" />
+
+      <div className="study-home-center">
+        <div className="study-home-badge">
+          <span />
+          Adaptive study workspace
+        </div>
+
+        <h1>
+          What are you
+          <br />
+          <em>learning?</em>
+        </h1>
+
+        <p>
+          Ask BillyOS anything. Explain it, understand it, challenge yourself,
+          or bring your own study material.
+        </p>
+
+        <div className="study-home-input-wrap">
+          <form
+            className="study-home-input"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePromptSubmit();
+            }}
+          >
+            <button
+              type="button"
+              className="study-attach"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Add a file"
+            >
+              +
+            </button>
+
+            <textarea
+              ref={textareaRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
+              }}
+              onPaste={handlePaste}
+              placeholder="Ask anything..."
+              rows={1}
+              disabled={isSubmitting}
+            />
+
+            {isSubmitting ? (
+              <div className="study-send-loading">•••</div>
+            ) : (
+              <button className="study-send" type="submit" aria-label="Start studying">
+                ↑
+              </button>
+            )}
+          </form>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            hidden
+            accept=".pdf,.txt,.md,.doc,.docx,.ppt,.pptx,image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+              e.currentTarget.value = "";
+            }}
+          />
+
+          <div className="study-input-tools">
+            <button onClick={() => fileInputRef.current?.click()}>＋ Files</button>
+            <button onClick={() => window.dispatchEvent(new CustomEvent("billyos:study-voice"))}>
+              ◉ Voice
+            </button>
+          </div>
+
+          {(attachedFile || imagePreview) && (
+            <div className="study-attachment-preview">
+              {imagePreview && <img src={imagePreview} alt="Pasted study material" />}
+              {attachedFile && <span>📎 {attachedFile.name}</span>}
+            </div>
+          )}
+        </div>
+
+        <div className="study-suggestions">
+          {suggestions.map((suggestion) => (
+            <button key={suggestion} onClick={() => submitStudy(suggestion)}>
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {essayChoiceOpen && (
+        <div className="study-choice-overlay">
+          <div className="study-choice-modal">
+            <div className="study-card-label">STUDY DETECTED AN ESSAY TASK</div>
+            <h2>What should we make?</h2>
+            <p>{essayPrompt}</p>
+
+            <button
+              className="study-option-button"
+              onClick={() => {
+                setEssayChoiceOpen(false);
+                setView("essay");
+              }}
+            >
+              <span>✍</span>
+              <div>
+                <strong>Make an essay</strong>
+                <small>Open Essay Studio</small>
+              </div>
+              <b>→</b>
+            </button>
+
+            <button
+              className="study-option-button"
+              onClick={() => {
+                setEssayChoiceOpen(false);
+                submitStudy(`Give me a short summarized answer for: ${essayPrompt}`);
+              }}
+            >
+              <span>≡</span>
+              <div>
+                <strong>Short summarized answer</strong>
+                <small>Send directly to Study</small>
+              </div>
+              <b>→</b>
+            </button>
+
+            <button
+              className="study-cancel-button"
+              onClick={() => setEssayChoiceOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="study-v2-shell">
+      <button
+        className="study-v2-close"
+        onClick={onClose}
+        aria-label="Close Study"
+      >
+        ×
+      </button>
+
+      {view === "home" && home}
+      {view === "dashboard" && dashboard}
+      {view === "essay" && essay}
+      {view === "challenge" && challenge}
+      {view === "result" && result}
+      {view === "explain" && home}
     </div>
   );
 }
