@@ -75,6 +75,37 @@ const features = [
 
 export default function FeaturesPage() {
   return (
+    <>
+      <style id="features-scroll-style">{`
+        html {
+          scroll-behavior: smooth;
+        }
+
+        body {
+          overflow-y: auto;
+          overflow-x: hidden;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255,255,255,0.72) rgba(255,255,255,0.06);
+        }
+
+        body::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        body::-webkit-scrollbar-track {
+          background: rgba(255,255,255,0.04);
+        }
+
+        body::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.72);
+          border-radius: 999px;
+          border: 2px solid rgba(7,7,10,0.85);
+        }
+
+        body::-webkit-scrollbar-thumb:hover {
+          background: rgba(255,255,255,0.9);
+        }
+      `}</style>
     <main
       style={{
         minHeight: "100vh",
