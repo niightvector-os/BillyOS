@@ -114,6 +114,74 @@ function isValidIntent(value: unknown): value is StudyIntent {
   return typeof value === "string" && INTENTS.includes(value as StudyIntent);
 }
 
+function extractChallengeSettings(topic: string) {
+  const countMatch = topic.match(/\b(?:exactly\s+)?(\d{1,3})\s+questions?\b/i);
+  const count = countMatch
+    ? Math.max(1, Math.min(50, Number(countMatch[1])))
+    : 10;
+
+  let questionType = "Mixed";
+  if (/\bwritten\b/i.test(topic)) questionType = "Written";
+  else if (/\bmultiple[- ]choice\b|\bmcq\b/i.test(topic)) questionType = "Multiple choice";
+
+  let difficulty = "Medium";
+  if (/\bextreme\b/i.test(topic)) difficulty = "Extreme";
+  else if (/\bhard\b/i.test(topic)) difficulty = "Hard";
+  else if (/\beasy\b/i.test(topic)) difficulty = "Easy";
+
+  return { count, questionType, difficulty };
+}
+
+function challengeItemIsValid(
+  item: unknown,
+  questionType: string
+): item is { question: string; options: string[]; correct_index: number } {
+  if (!item || typeof item !== "object") return false;
+
+  const q = item as Record<string, unknown>;
+
+  if (typeof q.question !== "string" || !q.question.trim()) return false;
+  if (!Array.isArray(q.options)) return false;
+  if (!q.options.every((option) => typeof option === "string")) return false;
+  if (!Number.isInteger(q.correct_index)) return false;
+
+  const options = q.options as string[];
+  const correctIndex = q.correct_index as number;
+
+  if (questionType === "Written") {
+    return options.length === 0 && correctIndex === -1;
+  }
+
+  if (questionType === "Multiple choice") {
+    return options.length >= 2 &&
+      options.length <= 4 &&
+      correctIndex >= 0 &&
+      correctIndex < options.length;
+  }
+
+  return (
+    (options.length === 0 && correctIndex === -1) ||
+    (
+      options.length >= 2 &&
+      options.length <= 4 &&
+      correctIndex >= 0 &&
+      correctIndex < options.length
+    )
+  );
+}
+
+function normalizeChallengeQuiz(
+  quiz: unknown,
+  count: number,
+  questionType: string
+) {
+  if (!Array.isArray(quiz)) return [];
+
+  return quiz
+    .filter((item) => challengeItemIsValid(item, questionType))
+    .slice(0, count);
+}
+
 function normalizeResult(value: unknown) {
   const item = (value && typeof value === "object") ? value as Record<string, unknown> : {};
   const intent = isValidIntent(item.intent) ? item.intent : "OTHER";
@@ -205,6 +273,59 @@ export async function POST(req: Request) {
 
   try {
     const parsed = normalizeResult(extractJson(raw));
+
+    if (parsed.intent === "CHALLENGE") {
+      const settings = extractChallengeSettings(topic);
+
+      parsed.quiz = normalizeChallengeQuiz(
+        parsed.quiz,
+        settings.count,
+        settings.questionType
+      );
+
+      if (parsed.quiz.length !== settings.count) {
+        console.log(
+          `[STUDY] challenge mismatch expected=${settings.count} actual=${parsed.quiz.length} ` +
+          `type=${settings.questionType} difficulty=${settings.difficulty}; retrying`
+        );
+
+        const repairPrompt = [
+          `Create exactly ${settings.count} ${settings.difficulty.toLowerCase()} questions.`,
+          `Question type: ${settings.questionType}.`,
+          `Do not add extra questions.`,
+          `Return ONLY valid JSON using this shape:`,
+          `{"quiz":[{"question":"...","options":[],"correct_index":-1}]}`,
+          `For Multiple choice, use 2 to 4 options and a valid correct_index.`,
+          `For Written, use options: [] and correct_index: -1.`,
+          `Topic/request: ${topic}`
+        ].join("\\n");
+
+        const repairedRaw = await createChatCompletion(
+          buildSystemPrompt(preferredLanguage),
+          repairPrompt,
+          0.15
+        );
+
+        if (repairedRaw !== null) {
+          try {
+            const repaired = extractJson(repairedRaw) as Record<string, unknown>;
+            parsed.quiz = normalizeChallengeQuiz(
+              repaired.quiz,
+              settings.count,
+              settings.questionType
+            );
+          } catch {
+            console.log(`[STUDY] challenge repair JSON parse failed`);
+          }
+        }
+      }
+
+      console.log(
+        `[STUDY] challenge final=${parsed.quiz.length}/${settings.count} ` +
+        `type=${settings.questionType} difficulty=${settings.difficulty}`
+      );
+    }
+
     console.log(`[STUDY] parsed OK intent=${parsed.intent} clarification=${parsed.clarification_required}`);
     return Response.json(parsed);
   } catch (err) {
