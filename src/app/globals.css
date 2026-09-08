@@ -3088,3 +3088,29 @@ h1.title {
 @keyframes auth-spin {
   to { transform: rotate(360deg); }
 }
+
+/* BillyOS Features scrollbar */
+.features-scroll-page {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.78) rgba(255, 255, 255, 0.06);
+  scroll-behavior: smooth;
+}
+
+.features-scroll-page::-webkit-scrollbar {
+  width: 8px;
+}
+
+.features-scroll-page::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.features-scroll-page::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 999px;
+  border: 2px solid rgba(7, 7, 10, 0.9);
+}
+
+.features-scroll-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.92);
+}
+
