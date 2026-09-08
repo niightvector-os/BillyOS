@@ -1,48 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BillyOS AI
 
-## Getting Started
+**BillyOS AI** is an AI-powered workspace for research, learning, productivity, and creation.
 
-First, run the development server:
+Instead of switching between separate tools, BillyOS brings multiple AI-powered workflows into one unified web experience.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Live
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Website:** https://billyos.co
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Current Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **AI Chat** — Have natural conversations with BillyOS and work through questions, ideas, and problems.
+- **Deep Research** — Research current topics and gather information with web-powered workflows.
+- **Study Mode** — Turn a topic into an AI-powered study experience.
+- **Visualize** — Turn information into charts, tables, comparisons, timelines, and other visual formats.
+- **Find on Map** — Explore locations, distances, routes, and geographic information.
+- **YouTube** — Discover relevant videos and learning resources.
+- **File Analysis** — Work with supported uploaded files and extracted content.
+- **Voice Input** — Interact with BillyOS using supported browser speech recognition.
+- **Ghost Mode** — A distraction-free BillyOS experience.
 
-## Learn More
+## 🎯 Vision
 
-To learn more about Next.js, take a look at the following resources:
+BillyOS AI is being developed around a simple idea:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> **AI should help you do more than answer questions.**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The long-term vision is to make BillyOS an intelligent workspace where users can research, learn, create, and eventually turn ideas into real digital products and creative work.
 
-## Deploy on Vercel
+## 🛠️ Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Next.js
+- React
+- TypeScript
+- Supabase
+- OpenRouter
+- Tavily
+- YouTube API
+- Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🧠 Planned Direction
 
-## BillyOS AI
+BillyOS is an evolving early-stage project.
 
-**BillyOS AI** is an AI-powered workspace for research, learning, productivity,
-and creation. It brings intelligent AI workflows into one unified web experience.
+Future development is planned around **FORGE — Idea to Creation Engine**, a concept for turning user ideas into real digital creations by coordinating research, design, generation, coding, testing, and other specialized capabilities.
 
-The product is designed to help users explore ideas, research information,
-learn through AI-powered study experiences, work with information, visualize
-knowledge, and accomplish everyday tasks from one workspace.
+FORGE is currently a planned feature and is not yet part of the live BillyOS product.
 
-**BillyOS** is the product brand, while **BillyOS AI** is the name used to
-describe its AI-powered platform.
+## 📚 Project Pages
+
+- Website: https://billyos.co
+- Features: https://billyos.co/features
+- About: https://billyos.co/about
+
+## ⚠️ Project Status
+
+BillyOS AI is currently an early-stage, pre-revenue software project under active development.
+
+The repository represents the current product foundation and is intended to evolve into a broader AI workspace.
+
+## 📄 License
+
+See the repository for project and usage details.
