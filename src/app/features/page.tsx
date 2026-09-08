@@ -418,6 +418,9 @@ export default function FeaturesPage() {
             <Link href="/terms" style={{ color: "inherit", textDecoration: "none" }}>
               Terms
             </Link>
+            <Link href="/cookies" style={{ color: "inherit", textDecoration: "none" }}>
+              Cookies
+            </Link>
           </div>
         </footer>
       </div>

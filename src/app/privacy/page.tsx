@@ -6,10 +6,31 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="public-page-shell privacy-stage">
-      <Link href="/" className="auth-back">← BillyOS</Link>
+    <main className="public-page-shell public-page-scroll">
+      <div className="public-page-inner">
+        <header className="public-page-nav">
+          <Link href="/" className="public-page-brand">
+            <img src="/favicons/logo-mark-64.png" alt="BillyOS AI" />
+            <span>BillyOS AI</span>
+          </Link>
 
-      <div className="privacy-card">
+          <nav className="public-page-links" aria-label="BillyOS navigation">
+            <Link href="/features">Features</Link>
+            <Link href="/research">Research</Link>
+            <Link href="/about">About</Link>
+            <Link href="/login">Sign in</Link>
+          </nav>
+        </header>
+
+        <section className="legal-page-hero">
+          <p className="public-page-eyebrow">BillyOS AI · Privacy</p>
+          <h1 className="public-page-title">Privacy Policy</h1>
+          <p className="public-page-lead">
+            Clear information about how BillyOS works and what it means for you.
+          </p>
+        </section>
+
+        <div className="privacy-card">
         <h1>Privacy Policy</h1>
         <p className="privacy-updated">Last updated: August 2026</p>
 
@@ -82,6 +103,36 @@ export default function PrivacyPage() {
           Questions about this policy or your data? Email us at{" "}
           <a href="mailto:billynandy123@gmail.com">billynandy123@gmail.com</a>.
         </p>
+        </div>
+
+        <footer className="public-page-footer legal-page-footer">
+          <div className="legal-footer-brand">
+            <span>BillyOS AI</span>
+            <small>One AI workspace for research, learning & creation.</small>
+          </div>
+
+          <div className="legal-footer-links">
+            <div>
+              <span>Explore</span>
+              <Link href="/">Home</Link>
+              <Link href="/features">Features</Link>
+              <Link href="/research">Research</Link>
+              <Link href="/about">About</Link>
+            </div>
+
+            <div>
+              <span>Account</span>
+              <Link href="/login">Sign in</Link>
+            </div>
+
+            <div>
+              <span>Legal</span>
+              <Link href="/privacy">Privacy</Link>
+              <Link href="/terms">Terms</Link>
+              <Link href="/cookies">Cookies</Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );

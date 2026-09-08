@@ -105,7 +105,9 @@ export default function ResearchPage() {
           <div>
             <Link href="/features">Features</Link>{" "}
             · <Link href="/about">About</Link>{" "}
-            · <Link href="/privacy">Privacy</Link>
+            · <Link href="/privacy">Privacy</Link>{" "}
+            · <Link href="/terms">Terms</Link>{" "}
+            · <Link href="/cookies">Cookies</Link>
           </div>
         </footer>
       </div>

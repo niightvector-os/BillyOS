@@ -215,6 +215,7 @@ export default function AboutPage() {
             <Link href="/research">Research</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
+            <Link href="/cookies">Cookies</Link>
           </div>
         </footer>
       </div>
