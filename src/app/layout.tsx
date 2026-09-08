@@ -86,6 +86,15 @@ const structuredData = {
       "description": "BillyOS is an AI workspace for researching, learning, creating, and getting things done in one unified experience."
     },
     {
+      "@type": "WebApplication",
+      "@id": "https://billyos.co/#application",
+      "name": "BillyOS AI",
+      "url": "https://billyos.co/",
+      "description": "BillyOS AI is an AI workspace for research, learning, productivity, discovery, and creation.",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web"
+    },
+    {
       "@type": "Organization",
       "@id": "https://billyos.co/#organization",
       "name": "BillyOS",
