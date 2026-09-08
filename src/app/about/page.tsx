@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main style={{ maxWidth: 900, margin: "0 auto", padding: "80px 24px" }}>
+    <main className="public-page-shell" style={{ maxWidth: 900, margin: "0 auto", padding: "80px 24px" }}>
       <h1>BillyOS</h1>
       <p>
         BillyOS AI is an AI-powered workspace designed to bring research,

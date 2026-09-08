@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="privacy-stage">
+    <main className="public-page-shell privacy-stage">
       <Link href="/" className="auth-back">← BillyOS</Link>
 
       <div className="privacy-card">
