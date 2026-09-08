@@ -3,12 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 
 export type StudySet = {
+  intent: string;
+  confidence: number;
+  clarification_required: boolean;
+  clarification_prompt: string;
+  clarification_options: string[];
   topic: string;
   summary: string;
+  direct_answer: string;
   key_concepts: string[];
   notes: string[];
   flashcards: { front: string; back: string }[];
   quiz: { question: string; options: string[]; correct_index: number }[];
+  next_steps: string[];
 };
 
 type StudyView =
@@ -64,6 +71,42 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
     }
   }
 
+  async function submitStudyWithIntent(intent: string) {
+    const topic = data?.topic || input.trim();
+    if (!topic || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/study", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          preferred_language: "en",
+          study_intent: intent,
+          material: attachedFile?.text || undefined,
+          context: data?.topic
+            ? `Previous Study topic: ${data.topic}`
+            : undefined,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Study request failed.");
+      }
+
+      setData(result);
+      setView("result");
+    } catch (error) {
+      console.error("[STUDY UI]", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function submitStudy(topicOverride?: string) {
     const topic = (topicOverride ?? input).trim();
     if (!topic || isSubmitting) return;
@@ -78,6 +121,9 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
           topic,
           preferred_language: "en",
           material: attachedFile?.text || undefined,
+          context: data?.topic
+            ? `Previous Study topic: ${data.topic}`
+            : undefined,
         }),
       });
 
@@ -88,6 +134,12 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
       }
 
       setData(result);
+
+      if (result.clarification_required) {
+        setView("result");
+        return;
+      }
+
       setView("result");
       resetInput();
     } catch (error) {
@@ -265,18 +317,46 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
 
       <div className="study-result-content">
         <section className="study-result-hero">
-          <div className="study-card-label">UNDERSTAND</div>
-          <h1>{data.topic}</h1>
-          <p>{data.summary}</p>
+          {data.clarification_required ? (
+            <>
+              <div className="study-card-label">LET'S MAKE IT FIT</div>
+              <h1>{data.clarification_prompt || "How should I approach this?"}</h1>
+              <p>Choose how you want BillyOS to explain this.</p>
 
-          <div className="study-result-actions">
-            <button className="study-primary-button" onClick={() => setView("challenge")}>
-              Challenge yourself
-            </button>
-            <button className="study-soft-button" onClick={() => setView("home")}>
-              Ask another question
-            </button>
-          </div>
+              <div className="study-result-actions">
+                <button
+                  className="study-primary-button"
+                  onClick={() => submitStudyWithIntent("PERSONAL_KNOWLEDGE")}
+                  disabled={isSubmitting}
+                >
+                  Personal knowledge
+                </button>
+
+                <button
+                  className="study-soft-button"
+                  onClick={() => submitStudyWithIntent("EXAM_EXPLANATION")}
+                  disabled={isSubmitting}
+                >
+                  Exam / Test explanation
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="study-card-label">UNDERSTAND</div>
+              <h1>{data.topic}</h1>
+              <p>{data.direct_answer || data.summary}</p>
+
+              <div className="study-result-actions">
+                <button className="study-primary-button" onClick={() => setView("challenge")}>
+                  Challenge yourself
+                </button>
+                <button className="study-soft-button" onClick={() => setView("home")}>
+                  Ask another question
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         <section className="study-content-card">
