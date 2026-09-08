@@ -36,7 +36,7 @@ const researchFeatures = [
 
 export default function ResearchPage() {
   return (
-    <main className="public-page-shell">
+    <main className="public-page-shell public-page-scroll">
       <div className="public-page-inner">
         <header className="public-page-nav">
           <Link href="/" className="public-page-brand">
