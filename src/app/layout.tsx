@@ -82,13 +82,14 @@ const structuredData = {
       "@id": "https://billyos.co/#website",
       "url": "https://billyos.co/",
       "name": "BillyOS",
-      "alternateName": ["Billy AI", "BillyOS AI"],
+      "alternateName": ["BillyOS AI", "Billy AI"],
       "description": "BillyOS is an AI workspace for researching, learning, creating, and getting things done in one unified experience."
     },
     {
       "@type": "Organization",
       "@id": "https://billyos.co/#organization",
       "name": "BillyOS",
+      "alternateName": ["BillyOS AI", "Billy AI"],
       "url": "https://billyos.co/",
       "logo": {
         "@type": "ImageObject",

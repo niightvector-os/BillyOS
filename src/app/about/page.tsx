@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About BillyOS",
+  title: "About BillyOS AI",
   description:
     "Learn about BillyOS, an AI workspace designed for research, learning, productivity, and creation.",
 };
@@ -11,7 +11,7 @@ export default function AboutPage() {
     <main style={{ maxWidth: 900, margin: "0 auto", padding: "80px 24px" }}>
       <h1>BillyOS</h1>
       <p>
-        BillyOS is an AI-powered workspace designed to bring research,
+        BillyOS AI is an AI-powered workspace designed to bring research,
         learning, productivity, and creative workflows into one unified
         experience.
       </p>
@@ -25,7 +25,7 @@ export default function AboutPage() {
 
       <h2>Built for what's next</h2>
       <p>
-        BillyOS is an evolving project with a focus on making AI more useful,
+        BillyOS AI is an evolving project with a focus on making AI more useful,
         accessible, and capable across everyday workflows.
       </p>
     </main>

@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## BillyOS AI
+
+**BillyOS AI** is an AI-powered workspace for research, learning, productivity,
+and creation. It brings intelligent AI workflows into one unified web experience.
+
+The product is designed to help users explore ideas, research information,
+learn through AI-powered study experiences, work with information, visualize
+knowledge, and accomplish everyday tasks from one workspace.
+
+**BillyOS** is the product brand, while **BillyOS AI** is the name used to
+describe its AI-powered platform.

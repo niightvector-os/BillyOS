@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Features",
+  title: "BillyOS AI Features",
   description:
     "Explore BillyOS features including AI chat, Deep Research, Study Mode, Visualize, maps, and video discovery.",
 };
@@ -19,10 +19,10 @@ const features = [
 export default function FeaturesPage() {
   return (
     <main style={{ maxWidth: 1000, margin: "0 auto", padding: "80px 24px" }}>
-      <h1>BillyOS Features</h1>
+      <h1>BillyOS AI Features</h1>
 
       <p>
-        BillyOS brings multiple AI-powered workflows into one unified
+        BillyOS AI brings multiple AI-powered workflows into one unified
         workspace for research, learning, discovery, and productivity.
       </p>
 

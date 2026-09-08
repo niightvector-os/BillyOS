@@ -512,8 +512,8 @@ export default function Core() {
               opacity: 0.62,
             }}
           >
-            BillyOS is an AI workspace for research, learning, productivity,
-            and creation — bringing intelligent tools together in one unified
+            BillyOS AI is an intelligent workspace for research, learning, productivity,
+            and creation — bringing powerful AI tools together in one unified
             experience.
           </p>
           <nav
