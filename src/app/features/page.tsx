@@ -3,6 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "BillyOS AI Features",
+  alternates: { canonical: "https://billyos.co/features" },
   description:
     "Explore BillyOS AI features for research, learning, discovery, visualization, files, maps, YouTube, voice input, and everyday AI assistance.",
 };

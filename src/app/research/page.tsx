@@ -3,6 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Deep Research",
+  alternates: { canonical: "https://billyos.co/research" },
   description:
     "Explore BillyOS AI Deep Research, a web-powered workflow for investigating current topics and organizing source-backed information.",
 };
