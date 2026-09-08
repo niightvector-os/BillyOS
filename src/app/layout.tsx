@@ -74,6 +74,31 @@ export const metadata: Metadata = {
   },
 };
 
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://billyos.co/#website",
+      "url": "https://billyos.co/",
+      "name": "BillyOS",
+      "alternateName": ["Billy AI", "BillyOS AI"],
+      "description": "BillyOS is an AI workspace for researching, learning, creating, and getting things done in one unified experience."
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://billyos.co/#organization",
+      "name": "BillyOS",
+      "url": "https://billyos.co/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://billyos.co/favicons/logo-mark-512.png"
+      }
+    }
+  ]
+};
+
+// BillyOS structured data
 export default function RootLayout({
   children,
 }: {
@@ -84,6 +109,12 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData),
+          }}
+        />
         {children}
       </body>
     </html>
