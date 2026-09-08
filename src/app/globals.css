@@ -2911,13 +2911,6 @@ h1.title {
   box-shadow: 0 0 0 1px #E01F1F55;
 }
 
-/* Split-screen login/signup layout */
-  to { transform: translateX(-50%); }
-}
-
-  .auth-side-right { padding: 24px; }
-}
-
 /* Login/signup — full white theme, thin black divider */
 .auth-stage-split {
   width: 100%;
