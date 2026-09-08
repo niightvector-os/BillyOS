@@ -7,11 +7,13 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-display",
   weight: ["500", "600", "700"],
 });
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-body",
   weight: ["400", "500"],
 });
+
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
@@ -19,17 +21,69 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BillyOS",
-  description: "An AI environment that builds the experience around the answer.",
+  metadataBase: new URL("https://billyos.co"),
+
+  title: {
+    default: "BillyOS — AI Workspace for Research, Learning & Creation",
+    template: "%s | BillyOS",
+  },
+
+  description:
+    "BillyOS is an AI workspace for researching, learning, creating, and getting things done in one unified experience.",
+
+  applicationName: "BillyOS",
+
+  alternates: {
+    canonical: "https://billyos.co/",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "https://billyos.co/",
+    siteName: "BillyOS",
+    title: "BillyOS — AI Workspace for Research, Learning & Creation",
+    description:
+      "Research, learn, create, and get things done with BillyOS.",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "BillyOS — AI Workspace for Research, Learning & Creation",
+    description:
+      "Research, learn, create, and get things done with BillyOS.",
+  },
+
+  icons: {
+    icon: [
+      {
+        url: "/favicons/logo-mark-32.png",
+        sizes: "32x32",
+        type: "image/png",
+      },
+      {
+        url: "/favicons/logo-mark-64.png",
+        sizes: "64x64",
+        type: "image/png",
+      },
+    ],
+    apple: "/favicons/logo-mark-180.png",
+  },
+
   verification: {
     google: "d_0WwkdAPTGZntmipcTisfANiq2XW_FimwrGMM-_GWk",
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
+      <body
+        className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      >
         {children}
       </body>
     </html>
