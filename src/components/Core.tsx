@@ -501,38 +501,6 @@ export default function Core() {
           <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="core-center" />
           <div className="core-wordmark">BillyOS</div>
           <h1 className="title">{greeting}</h1>
-          <p
-            style={{
-              maxWidth: "620px",
-              margin: "14px auto 0",
-              padding: "0 20px",
-              textAlign: "center",
-              fontSize: "14px",
-              lineHeight: 1.7,
-              opacity: 0.62,
-            }}
-          >
-            BillyOS AI is an intelligent workspace for research, learning, productivity,
-            and creation — bringing powerful AI tools together in one unified
-            experience.
-          </p>
-          <nav
-            aria-label="BillyOS information"
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              gap: "18px",
-              marginTop: "16px",
-              fontSize: "13px",
-            }}
-          >
-            <a href="/features" style={{ textDecoration: "none", opacity: 0.72 }}>
-              Explore Features
-            </a>
-            <a href="/about" style={{ textDecoration: "none", opacity: 0.72 }}>
-              About BillyOS
-            </a>
-          </nav>
         </div>
       )}
 
