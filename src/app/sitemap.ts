@@ -53,53 +53,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.2,
     },
-    {
-      url: `${base}/login`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.4,
-    },
-    {
-      url: `${base}/privacy`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.2,
-    },
-    {
-      url: `${base}/terms`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.2,
-    },
-    {
-      url: `${base}/cookies`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.2,
-    },
-    {
-      url: `${base}/login`,
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${base}/privacy`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${base}/terms`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${base}/cookies`,
-      lastModified: now,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
   ];
 }
