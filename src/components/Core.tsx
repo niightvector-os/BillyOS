@@ -525,6 +525,9 @@ export default function Core() {
           <img src="/favicons/logo-mark-64.png" alt="BillyOS" className="core-center" />
           <div className="core-wordmark">BillyOS</div>
           <h1 className="title">{greeting}</h1>
+          <p className="core-description">
+            An AI workspace for research, learning, creation, and everyday tasks.
+          </p>
         </div>
       )}
 

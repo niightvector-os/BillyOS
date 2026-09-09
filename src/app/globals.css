@@ -226,6 +226,17 @@ h1.title {
   text-transform: uppercase;
 }
 
+.core-description {
+  max-width: 520px;
+  margin: -24px 0 0;
+  text-align: center;
+  font-family: var(--font-body), Inter, sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  opacity: 0.55;
+}
+
 .search-shell {
   position: relative;
   width: 580px;
