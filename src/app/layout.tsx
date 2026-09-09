@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "BillyOS is an AI workspace for researching, learning, creating, and getting things done in one unified experience.",
+    "BillyOS is an AI workspace for research, learning, creation, and everyday tasks. Chat, investigate topics, visualize ideas, study, and get things done in one place.",
 
   applicationName: "BillyOS",
 
@@ -43,14 +43,14 @@ export const metadata: Metadata = {
     siteName: "BillyOS",
     title: "BillyOS — AI Workspace for Research, Learning & Creation",
     description:
-      "Research, learn, create, and get things done with BillyOS.",
+      "BillyOS is an AI workspace for research, learning, creation, and everyday tasks. Chat, investigate topics, visualize ideas, study, and get things done in one place.",
   },
 
   twitter: {
     card: "summary_large_image",
     title: "BillyOS — AI Workspace for Research, Learning & Creation",
     description:
-      "Research, learn, create, and get things done with BillyOS.",
+      "BillyOS is an AI workspace for research, learning, creation, and everyday tasks. Chat, investigate topics, visualize ideas, study, and get things done in one place.",
   },
 
   icons: {
