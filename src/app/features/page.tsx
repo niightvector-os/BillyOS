@@ -4,6 +4,18 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "BillyOS AI Features",
   alternates: { canonical: "https://billyos.co/features" },
+  openGraph: {
+    title: "BillyOS AI Features",
+    description: "Explore BillyOS AI features for research, learning, discovery, visualization, files, maps, YouTube, voice input, and everyday AI assistance.",
+    url: "https://billyos.co/features",
+    siteName: "BillyOS",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BillyOS AI Features",
+    description: "Explore BillyOS AI features for research, learning, discovery, visualization, files, maps, YouTube, voice input, and everyday AI assistance.",
+  },
   description:
     "Explore BillyOS AI features for research, learning, discovery, visualization, files, maps, YouTube, voice input, and everyday AI assistance.",
 };
