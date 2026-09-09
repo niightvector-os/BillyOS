@@ -1,4 +1,4 @@
-import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 import { createChatCompletion } from "@/lib/ai-providers";
 
 type StudyIntent =
@@ -232,8 +232,14 @@ function normalizeResult(value: unknown) {
 }
 
 export async function POST(req: Request) {
-  const usage = await checkAndIncrementUsage(req.headers.get("Authorization"));
-  if (usage.blocked) return usageBlockedResponse();
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
 
   const body = await req.json().catch(() => ({}));
   const topic = typeof body.topic === "string" ? body.topic.trim() : "";

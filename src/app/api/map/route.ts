@@ -1,3 +1,4 @@
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 import { getLocations, getRouteIfRequested } from "@/lib/geocode";
 import { fetchWikipediaImages } from "@/lib/wikipedia";
 import { createChatCompletion } from "@/lib/ai-providers";
@@ -14,6 +15,14 @@ Structure: a short bolded lead sentence with the core answer, then 2-4 short par
 }
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
   const { topic, preferred_language, context } = await req.json();
 
   const routeResult = await getRouteIfRequested(topic);

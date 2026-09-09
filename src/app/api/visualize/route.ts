@@ -1,4 +1,4 @@
-import { checkAndIncrementUsage, usageBlockedResponse } from "@/lib/usage";
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 import { RouterResponseSchema, GENERATIVE_SCHEMAS } from "@/lib/visualize-schema";
 import type { RouterResponse } from "@/lib/visualize-schema";
 import { tavilySearch } from "@/lib/tavily";
@@ -47,8 +47,14 @@ function buildGenerationSystem(blockTypes: string[], sources: { title: string; c
 }
 
 export async function POST(req: Request) {
-  const usage = await checkAndIncrementUsage(req.headers.get("Authorization"));
-  if (usage.blocked) return usageBlockedResponse();
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
 
   const timer = new Timer();
   const { question, preferred_language, context } = await req.json();

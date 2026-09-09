@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 
 const MODEL_FALLBACKS = [
   "google/gemma-4-31b-it:free",
@@ -10,6 +11,14 @@ const VALID_MODES = ["research", "visualize", "map", "video", "none"] as const;
 type ClassifiedMode = typeof VALID_MODES[number];
 
 export async function POST(req: NextRequest) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
   const { message } = await req.json();
   if (!message || typeof message !== "string") {
     return NextResponse.json({ mode: "none" });

@@ -1,4 +1,14 @@
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
+
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
   const { query } = await req.json();
   if (!query || query.length < 2) return Response.json({ suggestions: [] });
 

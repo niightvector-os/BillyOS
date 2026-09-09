@@ -1,3 +1,4 @@
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 import OpenAI from "openai";
 import { getLocations } from "@/lib/geocode";
 import { getErrorStatus } from "@/lib/errors";
@@ -65,6 +66,14 @@ async function fetchWikipediaImages(query: string) {
 }
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
   const { message } = await req.json();
   const classification = await classify(message);
 

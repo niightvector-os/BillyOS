@@ -23,6 +23,7 @@ type StudyView =
   | "explain"
   | "essay"
   | "challenge"
+  | "challenge-take"
   | "dashboard"
   | "result";
 
@@ -48,6 +49,11 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
   const [challengeQuestions, setChallengeQuestions] = useState(10);
   const [challengeDifficulty, setChallengeDifficulty] = useState("Medium");
   const [challengeType, setChallengeType] = useState("Mixed");
+  const [challengeQuiz, setChallengeQuiz] = useState<StudySet["quiz"]>([]);
+  const [challengeIndex, setChallengeIndex] = useState(0);
+  const [challengeSelected, setChallengeSelected] = useState<number | null>(null);
+  const [challengeScore, setChallengeScore] = useState(0);
+  const [challengeFinished, setChallengeFinished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attachedFile, setAttachedFile] = useState<{ name: string; text: string } | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -107,6 +113,47 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
     }
   }
 
+  async function submitStudyWithIntentAndTopic(
+    topicOverride: string,
+    intent: string
+  ) {
+    const topic = topicOverride.trim();
+    if (!topic || isSubmitting) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/study", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic,
+          preferred_language: "en",
+          study_intent: intent,
+          material: attachedFile?.text || undefined,
+          context: data?.topic
+            ? `Previous Study topic: ${data.topic}`
+            : undefined,
+        }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Study request failed.");
+      }
+
+      setData(result);
+      setEssayChoiceOpen(false);
+      setView("result");
+      setEssayPrompt("");
+    } catch (error) {
+      console.error("[STUDY UI]", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function submitStudy(topicOverride?: string) {
     const topic = (topicOverride ?? input).trim();
     if (!topic || isSubmitting) return;
@@ -137,6 +184,17 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
 
       if (result.clarification_required) {
         setView("result");
+        return;
+      }
+
+      if (result.intent === "CHALLENGE" && Array.isArray(result.quiz) && result.quiz.length > 0) {
+        setChallengeQuiz(result.quiz);
+        setChallengeIndex(0);
+        setChallengeSelected(null);
+        setChallengeScore(0);
+        setChallengeFinished(false);
+        setView("challenge-take");
+        resetInput();
         return;
       }
 
@@ -446,11 +504,135 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
         />
         <button
           className="study-primary-button"
-          onClick={() => submitStudy(`Help me understand and structure an essay for: ${essayPrompt}`)}
+          onClick={() =>
+            submitStudyWithIntentAndTopic(
+              essayPrompt,
+              "ESSAY"
+            )
+          }
         >
           Start Essay Studio
         </button>
       </div>
+    </div>
+  );
+
+  const challengeTake = (
+    <div className="study-special-workspace">
+      <button
+        className="study-back-button"
+        onClick={() => setView(data ? "result" : "home")}
+      >
+        ← Back
+      </button>
+
+      {!challengeFinished ? (
+        <>
+          <div className="study-special-header">
+            <div className="study-card-label">CHALLENGE MODE</div>
+            <h1>
+              Question {challengeIndex + 1} of {challengeQuiz.length}
+            </h1>
+            <p>Take your time. Your score will appear when you finish.</p>
+          </div>
+
+          {challengeQuiz[challengeIndex] && (
+            <div className="study-challenge-take-card">
+              <div className="study-challenge-question">
+                {challengeQuiz[challengeIndex].question}
+              </div>
+
+              {challengeQuiz[challengeIndex].options.length > 0 ? (
+                <div className="study-challenge-options">
+                  {challengeQuiz[challengeIndex].options.map((option, index) => (
+                    <button
+                      key={`${option}-${index}`}
+                      className={
+                        challengeSelected === index
+                          ? "study-challenge-option selected"
+                          : "study-challenge-option"
+                      }
+                      onClick={() => setChallengeSelected(index)}
+                    >
+                      <span>{String.fromCharCode(65 + index)}</span>
+                      <strong>{option}</strong>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <textarea
+                  className="study-challenge-written"
+                  placeholder="Write your answer here..."
+                  value={challengeSelected === -1 ? " " : ""}
+                  onChange={() => setChallengeSelected(-1)}
+                />
+              )}
+
+              <button
+                className="study-primary-button study-wide-button"
+                disabled={
+                  challengeQuiz[challengeIndex].options.length > 0 &&
+                  challengeSelected === null
+                }
+                onClick={() => {
+                  const current = challengeQuiz[challengeIndex];
+                  const isCorrect =
+                    current.options.length > 0 &&
+                    challengeSelected === current.correct_index;
+
+                  const nextScore = isCorrect
+                    ? challengeScore + 1
+                    : challengeScore;
+
+                  setChallengeScore(nextScore);
+
+                  if (challengeIndex + 1 >= challengeQuiz.length) {
+                    setChallengeFinished(true);
+                  } else {
+                    setChallengeIndex((value) => value + 1);
+                    setChallengeSelected(null);
+                  }
+                }}
+              >
+                {challengeIndex + 1 >= challengeQuiz.length ? "Finish challenge" : "Next question"}
+              </button>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="study-challenge-finished">
+          <div className="study-card-label">CHALLENGE COMPLETE</div>
+          <h1>
+            {challengeScore} / {challengeQuiz.length}
+          </h1>
+          <p>
+            {challengeQuiz.length
+              ? `${Math.round((challengeScore / challengeQuiz.length) * 100)}% correct.`
+              : "Challenge complete."}
+          </p>
+
+          <div className="study-result-actions">
+            <button
+              className="study-primary-button"
+              onClick={() => {
+                setChallengeIndex(0);
+                setChallengeSelected(null);
+                setChallengeScore(0);
+                setChallengeFinished(false);
+              }}
+            >
+              Try again
+            </button>
+
+            <button
+              className="study-soft-button"
+              onClick={() => setView("result")}
+            >
+              Back to Study
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -669,10 +851,12 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
 
             <button
               className="study-option-button"
-              onClick={() => {
-                setEssayChoiceOpen(false);
-                submitStudy(`Give me a short summarized answer for: ${essayPrompt}`);
-              }}
+              onClick={() =>
+                submitStudyWithIntentAndTopic(
+                  essayPrompt,
+                  "SUMMARY"
+                )
+              }
             >
               <span>≡</span>
               <div>
@@ -708,6 +892,7 @@ export default function StudyMode({ data: initialData = null, onClose }: StudyMo
       {view === "dashboard" && dashboard}
       {view === "essay" && essay}
       {view === "challenge" && challenge}
+      {view === "challenge-take" && challengeTake}
       {view === "result" && result}
       {view === "explain" && home}
     </div>

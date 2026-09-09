@@ -1,3 +1,4 @@
+import { checkAndIncrementUsage, usageBlockedResponse, checkAnonymousUsage, anonymousLimitResponse } from "@/lib/usage";
 import { formatViews } from "@/lib/youtube";
 
 type YoutubeApiItem = { id: { videoId: string }; snippet: { title: string; channelTitle: string; thumbnails?: { medium?: { url: string }; high?: { url: string } } } };
@@ -40,6 +41,14 @@ async function enrichViews(clips: { id: string; title: string; channel: string; 
 }
 
 export async function POST(req: Request) {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    const anon = await checkAnonymousUsage();
+    if (anon.blocked) return anonymousLimitResponse();
+  } else {
+    const usage = await checkAndIncrementUsage(authHeader);
+    if (usage.blocked) return usageBlockedResponse();
+  }
   const { topic } = await req.json();
   const clips = await shortsSearch(topic || "", 15);
 
