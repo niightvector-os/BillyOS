@@ -44,24 +44,39 @@ function dedupe(videos: YoutubeVideoLike[]) {
   return videos.filter((v) => (seen.has(v.id) ? false : (seen.add(v.id), true)));
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+}
+
+// Best-effort: an AI-refined query plus a second search using it. Never allowed
+// to hold up the response — if it's not back within the time budget, we ship
+// without it. The primary raw-topic search never depends on this succeeding.
+async function getBonusResults(topic: string): Promise<{ refined: string | null; results: YoutubeVideoLike[] }> {
+  const refined = await getRefinedQuery(topic);
+  if (!refined) return { refined: null, results: [] };
+  const results = await youtubeSearch(refined, 12);
+  return { refined, results };
+}
+
 export async function POST(req: Request) {
   const usage = await checkAndIncrementUsage(req.headers.get("Authorization"));
   if (usage.blocked) return usageBlockedResponse();
 
   const { topic } = await req.json();
 
-  // Primary, reliable: search the raw topic directly — never depends on AI succeeding
-  const primaryResults = await youtubeSearch(topic, 20);
+  const [primaryResults, bonus] = await Promise.all([
+    youtubeSearch(topic, 20),
+    withTimeout(getBonusResults(topic), 4000, { refined: null, results: [] }),
+  ]);
 
-  // Bonus, best-effort: an AI-refined query, only used if it passes a sanity check
-  const refined = await getRefinedQuery(topic);
-  const bonusResults = refined ? await youtubeSearch(refined, 12) : [];
-
-  const videos = dedupe([...primaryResults, ...bonusResults]).slice(0, 30);
+  const videos = dedupe([...primaryResults, ...bonus.results]).slice(0, 30);
 
   if (videos.length === 0) {
     return Response.json({ error: "Couldn't find a video for that right now." }, { status: 502 });
   }
 
-  return Response.json({ topic, query: refined || topic, videos });
+  return Response.json({ topic, query: bonus.refined || topic, videos });
 }

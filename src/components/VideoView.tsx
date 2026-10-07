@@ -186,7 +186,12 @@ export default function VideoView({
             </div>
           )}
 
-          {loading && <p className="thinking-text" style={{ marginTop: 24 }}>Searching...</p>}
+          {loading && (
+            <div className="yt-search-overlay">
+              <div className="yt-search-overlay-spinner" />
+              <p>Searching YouTube...</p>
+            </div>
+          )}
 
           {!isPlaying && !loading && (
             <div className="yt-landing">
