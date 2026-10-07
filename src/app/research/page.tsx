@@ -59,6 +59,7 @@ export default function ResearchPage() {
 
           <nav className="public-page-links" aria-label="BillyOS navigation">
             <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>
             <Link href="/about">About</Link>
             <Link href="/">Open BillyOS</Link>
           </nav>
@@ -116,7 +117,8 @@ export default function ResearchPage() {
         <footer className="public-page-footer">
           <span>© BillyOS AI</span>
           <div>
-            <Link href="/features">Features</Link>{" "}
+            <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>{" "}
             · <Link href="/about">About</Link>{" "}
             · <Link href="/privacy">Privacy</Link>{" "}
             · <Link href="/terms">Terms</Link>{" "}

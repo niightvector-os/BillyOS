@@ -16,6 +16,7 @@ export default function PrivacyPage() {
 
           <nav className="public-page-links" aria-label="BillyOS navigation">
             <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>
             <Link href="/research">Research</Link>
             <Link href="/about">About</Link>
             <Link href="/login">Sign in</Link>
@@ -116,6 +117,7 @@ export default function PrivacyPage() {
               <span>Explore</span>
               <Link href="/">Home</Link>
               <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>
               <Link href="/research">Research</Link>
               <Link href="/about">About</Link>
             </div>

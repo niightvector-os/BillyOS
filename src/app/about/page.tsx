@@ -62,6 +62,7 @@ export default function AboutPage() {
 
           <nav className="public-page-links" aria-label="BillyOS navigation">
             <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>
             <Link href="/research">Research</Link>
             <Link href="/about">About</Link>
             <Link href="/">Open BillyOS</Link>
@@ -225,6 +226,7 @@ export default function AboutPage() {
 
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Link href="/features">Features</Link>
+            <Link href="/youtube">YouTube</Link>
             <Link href="/research">Research</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
