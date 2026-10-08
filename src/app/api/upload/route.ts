@@ -47,9 +47,11 @@ async function extractText(file: File): Promise<string> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   if (name.endsWith(".pdf")) {
-    const pdfParse = (await import("pdf-parse/lib/pdf-parse.js")).default;
-    const data = await pdfParse(buffer);
-    return data.text;
+    const { PDFParse } = await import("pdf-parse");
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+    return result.text;
   }
 
   if (name.endsWith(".docx")) {
