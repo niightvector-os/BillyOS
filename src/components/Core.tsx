@@ -51,7 +51,7 @@ function pickGreeting(name?: string | null) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export default function Core() {
+export default function Core({ initialMode }: { initialMode?: "video" }) {
   const toast = useToast();
   const { messages, loading, isSearching, usageWarning, signupPromptOpen, closeSignupPrompt, sendMessage, sendResearchMessage, stopGeneration, saveModeResult, pendingLoad, clearPendingLoad, profile, truncateForEdit, conversations } = useChat();
   const [rotatingPlaceholder, setRotatingPlaceholder] = useState<string | null>(null);
@@ -67,7 +67,9 @@ export default function Core() {
   const [studyLoading, setStudyLoading] = useState(false);
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [mapLoading, setMapLoading] = useState(false);
-  const [videoData, setVideoData] = useState<VideoData | null>(null);
+  const [videoData, setVideoData] = useState<VideoData | null>(
+    initialMode === "video" ? { topic: "", videos: [] } : null
+  );
   const [videoLoading, setVideoLoading] = useState(false);
   const [visualizeData, setVisualizeData] = useState<VisualizeData | null>(null);
   const [visualizeLoading, setVisualizeLoading] = useState(false);
