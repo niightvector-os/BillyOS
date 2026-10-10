@@ -13,36 +13,59 @@ import OpenAI from "openai";
 
 const REQUEST_TIMEOUT_MS = 20_000; // 20 seconds — fail fast, try the next provider
 
-const openrouter = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: "https://openrouter.ai/api/v1",
-  timeout: REQUEST_TIMEOUT_MS,
-  maxRetries: 0,
-});
 
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-  timeout: REQUEST_TIMEOUT_MS,
-  maxRetries: 0,
-});
+type AIProvider = {
+  name: string;
+  client: OpenAI;
+  models: string[];
+};
 
-const gemini = new OpenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-  timeout: REQUEST_TIMEOUT_MS,
-  maxRetries: 0,
-});
+const providers: AIProvider[] = [];
 
-export const PROVIDER_CHAIN = [
-  { name: "openrouter", client: openrouter, models: [
+if (process.env.OPENROUTER_API_KEY) {
+  providers.push({
+    name: "openrouter",
+    client: new OpenAI({
+      apiKey: process.env.OPENROUTER_API_KEY,
+      baseURL: "https://openrouter.ai/api/v1",
+      timeout: REQUEST_TIMEOUT_MS,
+      maxRetries: 0,
+    }),
+    models: [
       "google/gemma-4-31b-it:free",
       "nvidia/nemotron-3-super-120b-a12b:free",
       "openai/gpt-oss-20b:free",
-    ] },
-  { name: "groq", client: groq, models: ["llama-3.3-70b-versatile"] },
-  { name: "gemini", client: gemini, models: ["gemini-2.5-flash"] },
-];
+    ],
+  });
+}
+
+if (process.env.GROQ_API_KEY) {
+  providers.push({
+    name: "groq",
+    client: new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+      timeout: REQUEST_TIMEOUT_MS,
+      maxRetries: 0,
+    }),
+    models: ["llama-3.3-70b-versatile"],
+  });
+}
+
+if (process.env.GEMINI_API_KEY) {
+  providers.push({
+    name: "gemini",
+    client: new OpenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      timeout: REQUEST_TIMEOUT_MS,
+      maxRetries: 0,
+    }),
+    models: ["gemini-2.5-flash"],
+  });
+}
+
+export const PROVIDER_CHAIN = providers;
 
 function describeError(err: unknown) {
   const e = err as { status?: number; message?: string };
