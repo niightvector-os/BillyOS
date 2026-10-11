@@ -16,10 +16,10 @@ const passwordChecker = new ZxcvbnFactory({
 });
 
 const videos = [
-  "/videos/typing.mp4",
-  "/videos/notes.mp4",
-  "/videos/teaching.mp4",
-  "/videos/desk-phone.mp4",
+  "/videos/optimized/typing.mp4",
+  "/videos/optimized/notes.mp4",
+  "/videos/optimized/teaching.mp4",
+  "/videos/optimized/desk-phone.mp4",
 ];
 
 const strengthLabels = ["Very weak", "Weak", "Fair", "Strong", "Very strong"];
@@ -38,7 +38,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [activeVideo, setActiveVideo] = useState(0);
-  const [videoProgress, setVideoProgress] = useState(0);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const router = useRouter();
 
@@ -50,22 +49,7 @@ export default function LoginPage() {
     const video = videoRefs.current[activeVideo];
     if (!video) return;
 
-    let animationFrame = 0;
     let cancelled = false;
-
-    setVideoProgress(0);
-
-    const updateProgress = () => {
-      if (cancelled) return;
-
-      if (video.duration && Number.isFinite(video.duration)) {
-        setVideoProgress(
-          Math.min(100, (video.currentTime / video.duration) * 100)
-        );
-      }
-
-      animationFrame = window.requestAnimationFrame(updateProgress);
-    };
 
     const startPlayback = () => {
       if (cancelled) return;
@@ -85,11 +69,8 @@ export default function LoginPage() {
       video.load();
     }
 
-    animationFrame = window.requestAnimationFrame(updateProgress);
-
     return () => {
       cancelled = true;
-      window.cancelAnimationFrame(animationFrame);
       video.pause();
       video.removeEventListener("canplay", handleCanPlay);
     };
@@ -203,7 +184,7 @@ export default function LoginPage() {
               src={src}
               muted
               playsInline
-              preload={index === 0 ? "auto" : "metadata"}
+              preload={index === activeVideo ? "auto" : "none"}
               aria-hidden="true"
               onEnded={() => setActiveVideo((current) => (current + 1) % videos.length)}
             />
