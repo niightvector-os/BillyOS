@@ -5207,3 +5207,54 @@ h1.title {
     transition-duration: 160ms;
   }
 }
+
+
+/* Logged-out homepage account actions */
+.account-auth-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.account-login-link,
+.account-signup-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 550;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.account-login-link {
+  color: var(--text-mid);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.025);
+}
+
+.account-login-link:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.06);
+}
+
+.account-signup-link {
+  color: #fff;
+  border: 1px solid rgba(124,108,255,0.55);
+  background: rgba(124,108,255,0.2);
+}
+
+.account-signup-link:hover {
+  background: rgba(124,108,255,0.32);
+}
+
+@media (max-width: 480px) {
+  .account-auth-actions { gap: 6px; }
+  .account-login-link,
+  .account-signup-link { min-height: 34px; padding: 0 11px; font-size: 11px; }
+}
