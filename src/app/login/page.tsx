@@ -47,6 +47,11 @@ export default function LoginPage() {
   const passwordsMatch = password === confirmPassword;
 
   useEffect(() => {
+    const requestedMode = new URLSearchParams(window.location.search).get("mode");
+    if (requestedMode === "signup") setMode("signup");
+  }, []);
+
+  useEffect(() => {
     const video = videoRefs.current[activeVideo];
     if (!video) return;
 
