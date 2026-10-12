@@ -26,12 +26,17 @@ export default function AccountButton() {
 
   if (!user) {
     return (
-      <Link href="/login" className="account-handle" aria-label="Sign in">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-        </svg>
-      </Link>
+      <div
+        className="account-auth-actions"
+        style={{ position: "fixed", top: 26, right: 32, zIndex: 40 }}
+      >
+        <Link href="/login?mode=signin" className="account-login-link">
+          Log in
+        </Link>
+        <Link href="/login?mode=signup" className="account-signup-link">
+          Sign up
+        </Link>
+      </div>
     );
   }
 
