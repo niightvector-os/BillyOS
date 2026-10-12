@@ -5195,3 +5195,15 @@ h1.title {
     overflow-y: auto;
   }
 }
+
+
+/* Login preview: short, smooth crossfade without the long zoom animation. */
+.auth-preview-video {
+  transition: opacity 320ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-preview-video {
+    transition-duration: 160ms;
+  }
+}
