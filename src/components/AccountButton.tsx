@@ -26,7 +26,10 @@ export default function AccountButton() {
 
   if (!user) {
     return (
-      <div className="account-auth-actions">
+      <div
+        className="account-auth-actions"
+        style={{ position: "fixed", top: 26, right: 32, zIndex: 40 }}
+      >
         <Link href="/login?mode=signin" className="account-login-link">
           Log in
         </Link>
