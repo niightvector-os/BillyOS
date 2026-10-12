@@ -39,6 +39,7 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [activeVideo, setActiveVideo] = useState(0);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const pendingVideoRef = useRef<number | null>(null);
   const router = useRouter();
 
   const needsAgreement = !agreed;
@@ -184,9 +185,37 @@ export default function LoginPage() {
               src={src}
               muted
               playsInline
-              preload={index === activeVideo ? "auto" : "none"}
+              preload={
+                index === activeVideo || index === (activeVideo + 1) % videos.length
+                  ? "auto"
+                  : "metadata"
+              }
               aria-hidden="true"
-              onEnded={() => setActiveVideo((current) => (current + 1) % videos.length)}
+              onCanPlay={() => {
+                if (pendingVideoRef.current === index) {
+                  pendingVideoRef.current = null;
+                  setActiveVideo(index);
+                }
+              }}
+              onError={() => {
+                if (pendingVideoRef.current === index) {
+                  pendingVideoRef.current = null;
+                  setActiveVideo(index);
+                }
+              }}
+              onEnded={() => {
+                const nextIndex = (index + 1) % videos.length;
+                const nextVideo = videoRefs.current[nextIndex];
+
+                if (!nextVideo || nextVideo.readyState >= 2) {
+                  setActiveVideo(nextIndex);
+                  return;
+                }
+
+                // Keep the finished frame visible until the next video is ready.
+                pendingVideoRef.current = nextIndex;
+                nextVideo.load();
+              }}
             />
           ))}
         </div>
