@@ -5197,9 +5197,11 @@ h1.title {
 }
 
 
-/* Login preview: short, smooth crossfade without the long zoom animation. */
+/* DJ-style login preview: overlapping clips blend into one another. */
 .auth-preview-video {
-  transition: opacity 320ms ease-in-out;
+  transition: opacity 480ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: opacity;
+  backface-visibility: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
