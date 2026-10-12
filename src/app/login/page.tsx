@@ -40,6 +40,7 @@ export default function LoginPage() {
   const [activeVideo, setActiveVideo] = useState(0);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const pendingVideoRef = useRef<number | null>(null);
+  const transitionStartedRef = useRef<number | null>(null);
   const router = useRouter();
 
   const needsAgreement = !agreed;
@@ -52,6 +53,7 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
+    transitionStartedRef.current = null;
     const video = videoRefs.current[activeVideo];
     if (!video) return;
 
@@ -77,7 +79,7 @@ export default function LoginPage() {
 
     return () => {
       cancelled = true;
-      video.pause();
+      // Let the outgoing clip keep playing underneath the crossfade.
       video.removeEventListener("canplay", handleCanPlay);
     };
   }, [activeVideo]);
@@ -199,7 +201,10 @@ export default function LoginPage() {
               onCanPlay={() => {
                 if (pendingVideoRef.current === index) {
                   pendingVideoRef.current = null;
-                  setActiveVideo(index);
+                  videoRefs.current[index]!.currentTime = 0;
+                  void videoRefs.current[index]!.play().then(() => {
+                    setActiveVideo(index);
+                  }).catch(() => setActiveVideo(index));
                 }
               }}
               onError={() => {
@@ -208,16 +213,41 @@ export default function LoginPage() {
                   setActiveVideo(index);
                 }
               }}
+              onTimeUpdate={() => {
+                if (activeVideo !== index || transitionStartedRef.current === index) return;
+                if (!Number.isFinite(videoRefs.current[index]?.duration) ||
+                    videoRefs.current[index]!.duration - videoRefs.current[index]!.currentTime > 0.55) return;
+
+                const nextIndex = (index + 1) % videos.length;
+                const nextVideo = videoRefs.current[nextIndex];
+                transitionStartedRef.current = index;
+
+                if (nextVideo && nextVideo.readyState >= 2) {
+                  nextVideo.currentTime = 0;
+                  void nextVideo.play().then(() => setActiveVideo(nextIndex)).catch(() => {
+                    setActiveVideo(nextIndex);
+                  });
+                } else {
+                  // Buffer the next clip before switching, without exposing a blank frame.
+                  pendingVideoRef.current = nextIndex;
+                  nextVideo?.load();
+                }
+              }}
+              onTransitionEnd={(event) => {
+                if (event.propertyName === "opacity" && activeVideo !== index) {
+                  videoRefs.current[index]?.pause();
+                }
+              }}
               onEnded={() => {
                 const nextIndex = (index + 1) % videos.length;
                 const nextVideo = videoRefs.current[nextIndex];
+                transitionStartedRef.current = index;
 
                 if (!nextVideo || nextVideo.readyState >= 2) {
                   setActiveVideo(nextIndex);
                   return;
                 }
 
-                // Keep the finished frame visible until the next video is ready.
                 pendingVideoRef.current = nextIndex;
                 nextVideo.load();
               }}
