@@ -26,7 +26,7 @@ export function LiveHeadline({ lines, label }: { lines: string[]; label: string 
     let visible = true;
 
     const paint = (now: number) => {
-      const y = window.scrollY;
+      const y = root.closest("[data-scroll-root]")?.scrollTop ?? window.scrollY;
       const phase = reduce ? 0 : now * 0.0007 + y * 0.006;
       letters.forEach((el, i) => {
         const w = (Math.sin(phase + i * 0.5) + 1) / 2;
@@ -105,10 +105,10 @@ export function LiveQuote({ words }: { words: { t: string; e?: boolean }[] }) {
     };
 
     paint();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true, capture: true });
     window.addEventListener("resize", onScroll);
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(raf);
     };

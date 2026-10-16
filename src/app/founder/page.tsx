@@ -95,7 +95,7 @@ export default function FounderPage() {
   );
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-scroll-root="">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
